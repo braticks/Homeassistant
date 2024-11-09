@@ -1,0 +1,168 @@
+type: horizontal-stack
+cards:
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Šiandienos elektros kainos (€/kWh)
+    graph_span: 24h
+    span:
+      start: day
+    now:
+      show: true
+      label: Dabar
+    experimental:
+      color_threshold: true
+    all_series_config:
+      show:
+        legend_value: false
+        datalabels: false
+        extremas: true
+        in_brush: true
+    series:
+      - entity: sensor.nordpool_energyprices
+        type: column
+        float_precision: 2
+        group_by:
+          func: last
+          duration: 1h
+        data_generator: |
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          return entity.attributes.times.map((time, index) => {
+            const date = new Date(time);
+            if (date >= today && date < tomorrow) {
+              return [date.getTime(), entity.attributes.prices[index]];
+            }
+          }).filter(item => item !== undefined);
+        color_threshold:
+          - value: 0
+            color: lightblue
+          - value: 0.15
+            color: green
+          - value: 0.21
+            color: orange
+          - value: 0.28
+            color: red
+        show:
+          extremas: max+time
+        color: red
+      - entity: sensor.nordpool_energyprices
+        attribute: max
+        type: column
+        color: red
+        float_precision: 4
+        stroke_width: 2
+        name: Šios dienos aukščiausia kaina
+        group_by:
+          duration: 1d
+        show:
+          in_chart: false
+          legend_value: false
+    yaxis:
+      - decimals: 2
+        min: 0.09
+        apex_config:
+          tickAmount: 10
+    apex_config:
+      xaxis:
+        labels:
+          datetimeFormatter:
+            hour: HH
+      chart:
+        height: 300px
+      tooltip:
+        x:
+          format: HH:mm
+      annotations:
+        xaxis:
+          - x: now
+            borderColor: "#775DD0"
+            label:
+              style:
+                color: "#fff"
+                background: "#775DD0"
+              text: Dabar
+  - type: custom:apexcharts-card
+    header:
+      show: true
+      title: Rytojaus elektros kainos (€/kWh)
+    graph_span: 24h
+    span:
+      start: day
+      offset: +1d
+    experimental:
+      color_threshold: true
+    all_series_config:
+      show:
+        legend_value: false
+        datalabels: false
+        extremas: true
+        in_brush: true
+    series:
+      - entity: sensor.nordpool_energyprices
+        type: column
+        float_precision: 2
+        group_by:
+          func: last
+          duration: 1h
+        data_generator: |
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          const dayAfterTomorrow = new Date(tomorrow);
+          dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
+          return entity.attributes.times.map((time, index) => {
+            const date = new Date(time);
+            if (date >= tomorrow && date < dayAfterTomorrow) {
+              return [date.getTime(), entity.attributes.prices[index]];
+            }
+          }).filter(item => item !== undefined);
+        color_threshold:
+          - value: 0
+            color: lightblue
+          - value: 0.15
+            color: green
+          - value: 0.21
+            color: orange
+          - value: 0.28
+            color: red
+        show:
+          extremas: max+time
+        color: red
+      - entity: sensor.nordpool_energyprices
+        attribute: max
+        type: column
+        color: red
+        float_precision: 4
+        stroke_width: 2
+        name: Rytojaus aukščiausia kaina
+        group_by:
+          duration: 1d
+        show:
+          in_chart: false
+          legend_value: false
+    yaxis:
+      - decimals: 2
+        min: 0.09
+        opposite: true
+        apex_config:
+          tickAmount: 10
+    apex_config:
+      xaxis:
+        labels:
+          datetimeFormatter:
+            hour: HH
+      chart:
+        height: 300px
+      noData:
+        text: Dar nėra duomenų
+        align: center
+        verticalAlign: middle
+        offsetX: 0
+        offsetY: 0
+        style:
+          fontSize: 20px
+          fontFamily: Helvetica
+          fontWeight: bold
