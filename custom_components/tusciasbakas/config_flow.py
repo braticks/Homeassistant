@@ -19,8 +19,9 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .api import TusciasBakasApi, TusciasBakasApiError
+from .api import KurohudasApi, KurohudasApiError
 from .const import (
+    CONF_CITY,
     CONF_DISCOUNT_RULES,
     CONF_DISCOUNTS,
     CONF_EXCLUDED_NETWORKS,
@@ -29,6 +30,7 @@ from .const import (
     CONF_LONGITUDE,
     CONF_RADIUS_KM,
     CONF_UPDATE_MINUTES,
+    DEFAULT_CITY,
     DEFAULT_FUEL_TYPE,
     DEFAULT_RADIUS_KM,
     DEFAULT_UPDATE_MINUTES,
@@ -42,11 +44,15 @@ FALLBACK_NETWORKS = [
     "Circle K",
     "Neste",
     "Viada",
+    "EMSI",
     "ORLEN",
     "Baltic Petroleum",
     "Jozita",
-    "EMSI",
     "Saurida",
+    "Stateta",
+    "Skulas",
+    "Alauša",
+    "Boost Petrol",
 ]
 
 WEEKDAY_OPTIONS = [
@@ -61,9 +67,12 @@ WEEKDAY_OPTIONS = [
 
 
 def _general_schema(defaults: dict[str, Any]) -> vol.Schema:
-    """General settings schema."""
     return vol.Schema(
         {
+            vol.Required(
+                CONF_CITY,
+                default=str(defaults.get(CONF_CITY, DEFAULT_CITY)),
+            ): str,
             vol.Required(
                 CONF_LATITUDE,
                 default=float(defaults.get(CONF_LATITUDE, 0)),
@@ -74,8 +83,11 @@ def _general_schema(defaults: dict[str, Any]) -> vol.Schema:
             ): vol.All(vol.Coerce(float), vol.Range(min=-180, max=180)),
             vol.Required(
                 CONF_RADIUS_KM,
-                default=float(defaults.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM)),
-            ): vol.All(vol.Coerce(float), vol.Range(min=1, max=50)),
+                default=min(
+                    12.0,
+                    float(defaults.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM)),
+                ),
+            ): vol.All(vol.Coerce(float), vol.Range(min=1, max=12)),
             vol.Required(
                 CONF_FUEL_TYPE,
                 default=str(defaults.get(CONF_FUEL_TYPE, DEFAULT_FUEL_TYPE)),
@@ -88,12 +100,11 @@ def _general_schema(defaults: dict[str, Any]) -> vol.Schema:
     )
 
 
-async def _async_network_names(hass) -> list[str]:
-    """Return unique fuel network names from current API data."""
-    api = TusciasBakasApi(async_get_clientsession(hass))
+async def _async_network_names(hass, city: str) -> list[str]:
+    api = KurohudasApi(async_get_clientsession(hass))
     try:
-        data = await api.async_get_stations()
-    except TusciasBakasApiError:
+        data = await api.async_get_stations(city)
+    except KurohudasApiError:
         return FALLBACK_NETWORKS
 
     names = {
@@ -107,12 +118,9 @@ async def _async_network_names(hass) -> list[str]:
 
 
 class TusciasBakasConfigFlow(ConfigFlow, domain=DOMAIN):
-    """Handle initial configuration."""
-
     VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
-        """Set up the integration."""
         if user_input is not None:
             await self.async_set_unique_id("main")
             self._abort_if_unique_id_configured()
@@ -122,6 +130,7 @@ class TusciasBakasConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         defaults = {
+            CONF_CITY: DEFAULT_CITY,
             CONF_LATITUDE: self.hass.config.latitude,
             CONF_LONGITUDE: self.hass.config.longitude,
             CONF_RADIUS_KM: DEFAULT_RADIUS_KM,
@@ -136,13 +145,10 @@ class TusciasBakasConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: ConfigEntry):
-        """Return options flow."""
         return TusciasBakasOptionsFlow()
 
 
 class TusciasBakasOptionsFlow(OptionsFlowWithReload):
-    """Manage settings, network filters and discounts."""
-
     def _current(self) -> dict[str, Any]:
         return {**self.config_entry.data, **self.config_entry.options}
 
@@ -168,7 +174,6 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
         return items
 
     async def async_step_init(self, user_input: dict[str, Any] | None = None):
-        """Show settings menu."""
         return self.async_show_menu(
             step_id="init",
             menu_options={
@@ -179,7 +184,6 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
         )
 
     async def async_step_general(self, user_input: dict[str, Any] | None = None):
-        """Edit location, radius, fuel and refresh interval."""
         current = self._current()
         if user_input is not None:
             return self._save(user_input)
@@ -190,14 +194,14 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
         )
 
     async def async_step_networks(self, user_input: dict[str, Any] | None = None):
-        """Choose networks that should be hidden."""
         current = self._current()
 
         if user_input is not None:
             excluded = list(user_input.get(CONF_EXCLUDED_NETWORKS, []))
             return self._save({CONF_EXCLUDED_NETWORKS: excluded})
 
-        networks = await _async_network_names(self.hass)
+        city = str(current.get(CONF_CITY, DEFAULT_CITY)).strip() or DEFAULT_CITY
+        networks = await _async_network_names(self.hass, city)
 
         if CONF_EXCLUDED_NETWORKS in current:
             selected = list(current.get(CONF_EXCLUDED_NETWORKS, []))
@@ -216,36 +220,32 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
             key=str.casefold,
         )
 
-        schema = vol.Schema(
-            {
-                vol.Optional(
-                    CONF_EXCLUDED_NETWORKS,
-                    default=selected,
-                ): SelectSelector(
-                    SelectSelectorConfig(
-                        options=all_options,
-                        multiple=True,
-                        mode=SelectSelectorMode.DROPDOWN,
-                    )
-                )
-            }
-        )
         return self.async_show_form(
             step_id="networks",
-            data_schema=schema,
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_EXCLUDED_NETWORKS,
+                        default=selected,
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=all_options,
+                            multiple=True,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            ),
         )
 
     async def async_step_discounts(self, user_input: dict[str, Any] | None = None):
-        """Manage discounts using a guided UI."""
         items = self._current_discounts()
         existing = "\n".join(
             f"• {structured_rule_label(item)}"
             for item in items
         ) or "Nuolaidų nėra."
 
-        menu = {
-            "add_discount": "Pridėti nuolaidą",
-        }
+        menu = {"add_discount": "Pridėti nuolaidą"}
         if items:
             menu["remove_discount"] = "Pašalinti nuolaidą"
         menu["save_discounts"] = "Išsaugoti"
@@ -260,57 +260,54 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
         self,
         user_input: dict[str, Any] | None = None,
     ):
-        """Add one structured discount rule."""
         if user_input is not None:
             self._current_discounts().append(
                 {
                     "network": str(user_input["network"]),
-                    "weekdays": [
-                        int(day)
-                        for day in user_input["weekdays"]
-                    ],
+                    "weekdays": [int(day) for day in user_input["weekdays"]],
                     "amount": float(user_input["amount"]),
                 }
             )
             return await self.async_step_discounts()
 
-        networks = await _async_network_names(self.hass)
-        schema = vol.Schema(
-            {
-                vol.Required("network"): SelectSelector(
-                    SelectSelectorConfig(
-                        options=networks,
-                        mode=SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-                vol.Required("weekdays"): SelectSelector(
-                    SelectSelectorConfig(
-                        options=WEEKDAY_OPTIONS,
-                        multiple=True,
-                        mode=SelectSelectorMode.DROPDOWN,
-                    )
-                ),
-                vol.Required("amount", default=0.05): NumberSelector(
-                    NumberSelectorConfig(
-                        min=0.01,
-                        max=1.00,
-                        step=0.01,
-                        unit_of_measurement="€/l",
-                        mode=NumberSelectorMode.BOX,
-                    )
-                ),
-            }
-        )
+        current = self._current()
+        city = str(current.get(CONF_CITY, DEFAULT_CITY)).strip() or DEFAULT_CITY
+        networks = await _async_network_names(self.hass, city)
+
         return self.async_show_form(
             step_id="add_discount",
-            data_schema=schema,
+            data_schema=vol.Schema(
+                {
+                    vol.Required("network"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=networks,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                    vol.Required("weekdays"): SelectSelector(
+                        SelectSelectorConfig(
+                            options=WEEKDAY_OPTIONS,
+                            multiple=True,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                    vol.Required("amount", default=0.05): NumberSelector(
+                        NumberSelectorConfig(
+                            min=0.01,
+                            max=1.00,
+                            step=0.01,
+                            unit_of_measurement="€/l",
+                            mode=NumberSelectorMode.BOX,
+                        )
+                    ),
+                }
+            ),
         )
 
     async def async_step_remove_discount(
         self,
         user_input: dict[str, Any] | None = None,
     ):
-        """Remove one configured discount."""
         items = self._current_discounts()
         if not items:
             return await self.async_step_discounts()
@@ -346,7 +343,6 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
         self,
         user_input: dict[str, Any] | None = None,
     ):
-        """Persist discount changes."""
         return self._save(
             {CONF_DISCOUNTS: list(self._current_discounts())}
         )
