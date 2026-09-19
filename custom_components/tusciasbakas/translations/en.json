@@ -4,10 +4,11 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Choose location, radius and fuel type. Network filters and discounts can be configured later through Configure.",
+        "description": "Price source: Kurohudas.lt. A Kurohudas city page covers stations within 12 km of the selected city.",
         "data": {
-          "latitude": "Latitude",
-          "longitude": "Longitude",
+          "city": "City on Kurohudas",
+          "latitude": "Search center latitude",
+          "longitude": "Search center longitude",
           "radius_km": "Search radius",
           "fuel_type": "Fuel type",
           "update_minutes": "Update interval"
@@ -26,9 +27,11 @@
       },
       "general": {
         "title": "General settings",
+        "description": "Kurohudas city lists cover up to 12 km around a city, so the integration radius is limited to 12 km.",
         "data": {
-          "latitude": "Latitude",
-          "longitude": "Longitude",
+          "city": "City on Kurohudas",
+          "latitude": "Search center latitude",
+          "longitude": "Search center longitude",
           "radius_km": "Search radius",
           "fuel_type": "Fuel type",
           "update_minutes": "Update interval"
@@ -36,7 +39,7 @@
       },
       "networks": {
         "title": "Fuel network filtering",
-        "description": "Select networks you do not want to see in results.",
+        "description": "Select networks to hide. Circle K, Neste, Viada and EMSI are shown by default.",
         "data": {
           "excluded_networks": "Hide these fuel networks"
         }
