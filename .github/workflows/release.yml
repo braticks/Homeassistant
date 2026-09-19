@@ -1,0 +1,51 @@
+name: Release Tuščias bakas
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "custom_components/tusciasbakas/manifest.json"
+      - ".github/workflows/release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('custom_components/tusciasbakas/manifest.json'))['version'])")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Check existing release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create release
+        if: steps.check.outputs.exists != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          gh release create "$TAG"             --target main             --title "Tuščias bakas v$VERSION"             --generate-notes
