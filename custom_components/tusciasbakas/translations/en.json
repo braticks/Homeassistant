@@ -4,28 +4,15 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Choose location, radius and fuel type. Put every discount into a separate field using: Station;days;EUR/l, e.g. Circle K;fri;0.10",
+        "description": "Choose location, radius and fuel type. Network filters and discounts can be configured later through Configure.",
         "data": {
           "latitude": "Latitude",
           "longitude": "Longitude",
           "radius_km": "Search radius",
           "fuel_type": "Fuel type",
-          "update_minutes": "Update interval",
-          "discount_rule_1": "Discount 1",
-          "discount_rule_2": "Discount 2",
-          "discount_rule_3": "Discount 3",
-          "discount_rule_4": "Discount 4",
-          "discount_rule_5": "Discount 5",
-          "discount_rule_6": "Discount 6",
-          "discount_rule_7": "Discount 7",
-          "discount_rule_8": "Discount 8",
-          "discount_rule_9": "Discount 9",
-          "discount_rule_10": "Discount 10"
+          "update_minutes": "Update interval"
         }
       }
-    },
-    "error": {
-      "invalid_discount_rules": "At least one discount rule is invalid. Use Station;days;discount, e.g. Circle K;fri;0.10"
     },
     "abort": {
       "already_configured": "The integration is already configured."
@@ -35,28 +22,44 @@
     "step": {
       "init": {
         "title": "Tuščias bakas settings",
-        "description": "Days: mon,tue,wed,thu,fri,sat,sun. Use 'all' for every day. Put every discount into a separate field.",
+        "description": "Choose what you want to change."
+      },
+      "general": {
+        "title": "General settings",
         "data": {
           "latitude": "Latitude",
           "longitude": "Longitude",
           "radius_km": "Search radius",
           "fuel_type": "Fuel type",
-          "update_minutes": "Update interval",
-          "discount_rule_1": "Discount 1",
-          "discount_rule_2": "Discount 2",
-          "discount_rule_3": "Discount 3",
-          "discount_rule_4": "Discount 4",
-          "discount_rule_5": "Discount 5",
-          "discount_rule_6": "Discount 6",
-          "discount_rule_7": "Discount 7",
-          "discount_rule_8": "Discount 8",
-          "discount_rule_9": "Discount 9",
-          "discount_rule_10": "Discount 10"
+          "update_minutes": "Update interval"
+        }
+      },
+      "networks": {
+        "title": "Fuel network filtering",
+        "description": "Select networks you do not want to see in results.",
+        "data": {
+          "excluded_networks": "Hide these fuel networks"
+        }
+      },
+      "discounts": {
+        "title": "Discounts",
+        "description": "Currently configured:\n{existing}"
+      },
+      "add_discount": {
+        "title": "Add discount",
+        "description": "Choose a fuel network, weekdays and discount amount.",
+        "data": {
+          "network": "Fuel network",
+          "weekdays": "Valid weekdays",
+          "amount": "Discount €/l"
+        }
+      },
+      "remove_discount": {
+        "title": "Remove discount",
+        "data": {
+          "discount_index": "Discount to remove"
         }
       }
-    },
-    "error": {
-      "invalid_discount_rules": "At least one discount rule is invalid."
     }
   },
   "entity": {
@@ -66,6 +69,7 @@
       "cheapest_effective_price": {"name": "Cheapest price after discounts"},
       "cheapest_effective_station": {"name": "Cheapest station after discounts"},
       "nearest_station": {"name": "Nearest station"},
+      "nearest_distance": {"name": "Distance to nearest station"},
       "station_count": {"name": "Stations in radius"}
     }
   }
