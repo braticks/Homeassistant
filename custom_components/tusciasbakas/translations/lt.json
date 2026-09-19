@@ -4,9 +4,8 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Kainų šaltinis – Kurohudas.lt. Miesto puslapis apima degalines iki 12 km nuo pasirinkto miesto.",
+        "description": "Duomenys imami iš oficialaus Lietuvos energetikos agentūros (LEA) degalų kainų šaltinio. Darbo dienomis kainos pateikiamos pagal 10:00 val. duomenis, o kai kurios degalinės jas atnaujina dažniau. Lojalumo nuolaidos į LEA kainą neįtrauktos.",
         "data": {
-          "city": "Miestas Kurohudas puslapyje",
           "latitude": "Paieškos centro platuma",
           "longitude": "Paieškos centro ilguma",
           "radius_km": "Paieškos spindulys",
@@ -27,9 +26,8 @@
       },
       "general": {
         "title": "Bendri nustatymai",
-        "description": "Kurohudas miesto sąrašas apima iki 12 km nuo miesto, todėl maksimalus integracijos spindulys yra 12 km.",
+        "description": "Pasirinkite paieškos centrą, spindulį, kuro tipą ir atnaujinimo intervalą.",
         "data": {
-          "city": "Miestas Kurohudas puslapyje",
           "latitude": "Paieškos centro platuma",
           "longitude": "Paieškos centro ilguma",
           "radius_km": "Paieškos spindulys",
@@ -39,7 +37,7 @@
       },
       "networks": {
         "title": "Degalinių filtravimas",
-        "description": "Pažymėkite tinklus, kurių visai nenorite matyti rezultatuose. Pagal nutylėjimą rodomi Circle K, Neste, Viada ir EMSI.",
+        "description": "Pažymėkite tinklus, kurių nenorite matyti rezultatuose. Pagal nutylėjimą rodomi Circle K, Neste, Viada ir EMSI.",
         "data": {
           "excluded_networks": "Nerodyti šių degalinių tinklų"
         }
@@ -50,7 +48,7 @@
       },
       "add_discount": {
         "title": "Pridėti nuolaidą",
-        "description": "Pasirinkite degalinių tinklą, dienas ir nuolaidos dydį.",
+        "description": "Pasirinkite degalinių tinklą, savaitės dienas ir nuolaidos dydį. Ji bus atimama iš LEA skelbiamos kainos.",
         "data": {
           "network": "Degalinių tinklas",
           "weekdays": "Kuriomis dienomis galioja",
