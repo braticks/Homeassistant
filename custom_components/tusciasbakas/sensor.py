@@ -36,10 +36,13 @@ def _station_attrs(station: dict[str, Any] | None) -> dict[str, Any]:
         "advertised_price": station.get("price"),
         "discount_eur_l": station.get("discount_eur_l"),
         "effective_price": station.get("effective_price"),
+        "price_updated": station.get("price_updated"),
         "latitude": station.get("latitude"),
         "longitude": station.get("longitude"),
         "discount_rules": station.get("discount_rules", []),
         "logo_url": station_logo_url(station),
+        "source": station.get("source"),
+        "detail_url": station.get("detail_url"),
     }
 
 
@@ -57,7 +60,9 @@ def _station_display(data: dict[str, Any], key: str) -> str | None:
     if not station:
         return None
 
-    network = str(station.get("network") or station.get("name") or "Degalinė").strip()
+    network = str(
+        station.get("network") or station.get("name") or "Degalinė"
+    ).strip()
     address = str(station.get("address") or "").strip()
     if address:
         return f"{network} — {address}"
@@ -116,7 +121,9 @@ SENSORS = (
         translation_key="nearest_distance",
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         icon="mdi:map-marker-distance",
-        value_fn=lambda d: d["nearest"]["distance_km"] if d.get("nearest") else None,
+        value_fn=lambda d: (
+            d["nearest"]["distance_km"] if d.get("nearest") else None
+        ),
         attrs_fn=_top_attrs("top_by_distance", "nearest"),
         station_key="nearest",
     ),
@@ -159,9 +166,9 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
             "name": "Tuščias bakas",
-            "manufacturer": "tusciasbakas.lt",
-            "model": "LEA fuel prices",
-            "configuration_url": "https://tusciasbakas.lt/",
+            "manufacturer": "Kurohudas.lt",
+            "model": "Fuel prices",
+            "configuration_url": "https://www.kurohudas.lt/",
         }
 
     @property
@@ -180,6 +187,8 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
         value = self.entity_description.attrs_fn(self.coordinator.data)
         attrs = {
             "attribution": ATTRIBUTION,
+            "source": self.coordinator.data.get("source"),
+            "city": self.coordinator.data.get("city"),
             "fuel_type": FUEL_TYPES.get(
                 self.coordinator.fuel_type,
                 self.coordinator.fuel_type,
