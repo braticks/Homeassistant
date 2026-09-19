@@ -4,19 +4,28 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Choose search location, radius, fuel type and discounts. Discount format: Station;days;EUR/l, e.g. Circle K;fri;0.10",
+        "description": "Choose location, radius and fuel type. Put every discount into a separate field using: Station;days;EUR/l, e.g. Circle K;fri;0.10",
         "data": {
           "latitude": "Latitude",
           "longitude": "Longitude",
           "radius_km": "Search radius",
           "fuel_type": "Fuel type",
-          "discount_rules": "Discount rules",
-          "update_minutes": "Update interval"
+          "update_minutes": "Update interval",
+          "discount_rule_1": "Discount 1",
+          "discount_rule_2": "Discount 2",
+          "discount_rule_3": "Discount 3",
+          "discount_rule_4": "Discount 4",
+          "discount_rule_5": "Discount 5",
+          "discount_rule_6": "Discount 6",
+          "discount_rule_7": "Discount 7",
+          "discount_rule_8": "Discount 8",
+          "discount_rule_9": "Discount 9",
+          "discount_rule_10": "Discount 10"
         }
       }
     },
     "error": {
-      "invalid_discount_rules": "Invalid discount format. Use Station;days;discount, e.g. Circle K;fri;0.10"
+      "invalid_discount_rules": "At least one discount rule is invalid. Use Station;days;discount, e.g. Circle K;fri;0.10"
     },
     "abort": {
       "already_configured": "The integration is already configured."
@@ -26,25 +35,36 @@
     "step": {
       "init": {
         "title": "Tuščias bakas settings",
-        "description": "Days: mon,tue,wed,thu,fri,sat,sun. Use 'all' for every day.",
+        "description": "Days: mon,tue,wed,thu,fri,sat,sun. Use 'all' for every day. Put every discount into a separate field.",
         "data": {
           "latitude": "Latitude",
           "longitude": "Longitude",
           "radius_km": "Search radius",
           "fuel_type": "Fuel type",
-          "discount_rules": "Discount rules",
-          "update_minutes": "Update interval"
+          "update_minutes": "Update interval",
+          "discount_rule_1": "Discount 1",
+          "discount_rule_2": "Discount 2",
+          "discount_rule_3": "Discount 3",
+          "discount_rule_4": "Discount 4",
+          "discount_rule_5": "Discount 5",
+          "discount_rule_6": "Discount 6",
+          "discount_rule_7": "Discount 7",
+          "discount_rule_8": "Discount 8",
+          "discount_rule_9": "Discount 9",
+          "discount_rule_10": "Discount 10"
         }
       }
     },
     "error": {
-      "invalid_discount_rules": "Invalid discount format. Use Station;days;discount."
+      "invalid_discount_rules": "At least one discount rule is invalid."
     }
   },
   "entity": {
     "sensor": {
       "cheapest_price": {"name": "Cheapest advertised price"},
+      "cheapest_station": {"name": "Cheapest station"},
       "cheapest_effective_price": {"name": "Cheapest price after discounts"},
+      "cheapest_effective_station": {"name": "Cheapest station after discounts"},
       "nearest_station": {"name": "Nearest station"},
       "station_count": {"name": "Stations in radius"}
     }
