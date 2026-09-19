@@ -1,219 +1,251 @@
-"""Client and tolerant parser for the public Tuščias bakas JSON API."""
+"""Kurohudas.lt client for Tuščias bakas."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-import math
+from html.parser import HTMLParser
 import re
-from typing import Any
+from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
 
 from aiohttp import ClientError, ClientSession
 
-from .const import API_URL
+from .const import KUROHUDAS_BASE_URL
 
 
-class TusciasBakasApiError(Exception):
-    """Base API error."""
+class KurohudasApiError(Exception):
+    """Base Kurohudas client error."""
 
 
 @dataclass(slots=True)
 class Station:
-    """Normalized fuel station record."""
+    """Normalized Kurohudas station."""
 
     name: str
     network: str
     address: str
-    latitude: float
-    longitude: float
     prices: dict[str, float]
+    detail_url: str
+    updated: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 @dataclass(slots=True)
 class ApiData:
-    """Normalized API result."""
+    """Normalized Kurohudas city result."""
 
     stations: list[Station]
     data_date: str | None = None
 
 
-def _norm_key(value: Any) -> str:
-    return re.sub(r"[^a-z0-9]+", "", str(value).lower())
+KNOWN_NETWORKS = (
+    "Baltic Petroleum",
+    "Circle K",
+    "Boost Petrol",
+    "Neste",
+    "EMSI",
+    "ORLEN",
+    "Orlen",
+    "Viada",
+    "Jozita",
+    "Stateta",
+    "Skulas",
+    "Saurida",
+    "Alauša",
+    "Alausa",
+    "Regusa",
+    "Lanx",
+)
+
+_UPDATED_RE = re.compile(
+    r"(Šiandien|Vakar|Užvakar|\d{4}-\d{2}-\d{2})\s*$",
+    re.IGNORECASE,
+)
+_DATE_RE = re.compile(r"Kainų data\s*[—-]\s*(\d{4}-\d{2}-\d{2})")
+_COORD_RE = re.compile(
+    r"destination=([-+]?\d+(?:\.\d+)?)%2C([-+]?\d+(?:\.\d+)?)",
+    re.IGNORECASE,
+)
 
 
-def _float(value: Any) -> float | None:
-    if value is None or isinstance(value, bool):
-        return None
-    if isinstance(value, (int, float)):
-        return float(value)
-    text = str(value).strip().replace(" ", "").replace(",", ".")
-    text = re.sub(r"[^0-9.\-]", "", text)
-    if not text:
+class _FuelTableParser(HTMLParser):
+    """Extract station table rows from Kurohudas HTML."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self.in_tr = False
+        self.in_cell = False
+        self.current_cells: list[str] = []
+        self.current_cell_parts: list[str] = []
+        self.current_href: str | None = None
+        self.rows: list[tuple[list[str], str | None]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "tr":
+            self.in_tr = True
+            self.current_cells = []
+            self.current_href = None
+        elif self.in_tr and tag in {"td", "th"}:
+            self.in_cell = True
+            self.current_cell_parts = []
+        elif self.in_tr and self.in_cell and tag == "a" and self.current_href is None:
+            href = dict(attrs).get("href")
+            if href and "/degalines/" in href:
+                self.current_href = href
+
+    def handle_endtag(self, tag: str) -> None:
+        if self.in_tr and tag in {"td", "th"} and self.in_cell:
+            value = " ".join("".join(self.current_cell_parts).split())
+            self.current_cells.append(value)
+            self.current_cell_parts = []
+            self.in_cell = False
+        elif tag == "tr" and self.in_tr:
+            if self.current_cells:
+                self.rows.append((self.current_cells, self.current_href))
+            self.in_tr = False
+            self.in_cell = False
+
+    def handle_data(self, data: str) -> None:
+        if self.in_tr and self.in_cell:
+            self.current_cell_parts.append(data)
+
+
+def _price(value: str) -> float | None:
+    text = value.strip().replace(",", ".")
+    if text in {"", "-", "—"}:
         return None
     try:
-        return float(text)
+        number = float(re.sub(r"[^0-9.]", "", text))
     except ValueError:
         return None
+    return number if 0.1 < number < 10 else None
 
 
-def _first(mapping: dict[str, Any], keys: tuple[str, ...]) -> Any:
-    normalized = {_norm_key(k): v for k, v in mapping.items()}
-    for key in keys:
-        if _norm_key(key) in normalized:
-            value = normalized[_norm_key(key)]
-            if value not in (None, ""):
-                return value
-    return None
+def _strip_updated(text: str) -> tuple[str, str | None]:
+    match = _UPDATED_RE.search(text)
+    if not match:
+        return text.strip(), None
+    return text[: match.start()].strip(" ,"), match.group(1)
 
 
-FUEL_ALIASES: dict[str, tuple[str, ...]] = {
-    "petrol_95": (
-        "95", "p95", "a95", "e5", "e10", "petrol95", "petrol_95", "gasoline95",
-        "gasoline_95", "benzinas95", "benzinas_95", "benzinas", "unleaded95",
-    ),
-    "diesel": (
-        "diesel", "dyzelinas", "b7", "d", "diesel_b7", "dyzelinas_b7",
-    ),
-    "lpg": (
-        "lpg", "snd", "dujos", "gas", "autogas", "propane", "propanas",
-    ),
-}
+def _network_and_address(text: str) -> tuple[str, str]:
+    clean = text.strip()
+    for network in sorted(KNOWN_NETWORKS, key=len, reverse=True):
+        if clean.casefold().startswith(network.casefold()):
+            address = clean[len(network):].strip(" ,-")
+            canonical = "ORLEN" if network.casefold() == "orlen" else network
+            return canonical, address
+
+    first, _, rest = clean.partition(" ")
+    return first or "Degalinė", rest.strip()
 
 
-def _extract_prices(props: dict[str, Any]) -> dict[str, float]:
-    containers: list[Any] = [props]
-    for key in ("prices", "price", "fuels", "fuel_prices", "fuelPrices"):
-        val = props.get(key)
-        if val is not None:
-            containers.append(val)
+def parse_city_page(html: str) -> ApiData:
+    """Parse the Kurohudas city table."""
+    parser = _FuelTableParser()
+    parser.feed(html)
 
-    result: dict[str, float] = {}
-    for fuel, aliases in FUEL_ALIASES.items():
-        for container in containers:
-            if isinstance(container, dict):
-                value = _first(container, aliases)
-                number = _float(value)
-                if number is not None and 0.1 < number < 10:
-                    result[fuel] = number
-                    break
-            elif isinstance(container, list):
-                for item in container:
-                    if not isinstance(item, dict):
-                        continue
-                    kind = _first(item, ("fuel", "type", "name", "product", "code"))
-                    if kind is None:
-                        continue
-                    if _norm_key(kind) not in {_norm_key(a) for a in aliases}:
-                        continue
-                    number = _float(_first(item, ("price", "value", "amount")))
-                    if number is not None and 0.1 < number < 10:
-                        result[fuel] = number
-                        break
-                if fuel in result:
-                    break
-    return result
+    data_date_match = _DATE_RE.search(html)
+    data_date = data_date_match.group(1) if data_date_match else None
 
+    stations: list[Station] = []
+    for cells, href in parser.rows:
+        if not href or len(cells) < 5:
+            continue
 
-def _extract_station(item: Any) -> Station | None:
-    if not isinstance(item, dict):
-        return None
+        station_text, updated = _strip_updated(cells[0])
+        network, address = _network_and_address(station_text)
 
-    props = item.get("properties") if isinstance(item.get("properties"), dict) else item
-    props = dict(props)
+        prices: dict[str, float] = {}
+        values = {
+            "diesel": _price(cells[1]),
+            "petrol_95": _price(cells[2]),
+            "petrol_98": _price(cells[3]),
+            "lpg": _price(cells[4]),
+        }
+        for fuel, value in values.items():
+            if value is not None:
+                prices[fuel] = value
 
-    coords_obj = props.get("coordinates") or props.get("coords") or props.get("coordinate")
-    if isinstance(coords_obj, dict):
-        for key, value in coords_obj.items():
-            props.setdefault(key, value)
+        stations.append(
+            Station(
+                name=station_text,
+                network=network,
+                address=address,
+                prices=prices,
+                detail_url=urljoin(KUROHUDAS_BASE_URL, href),
+                updated=updated,
+            )
+        )
 
-    lat = _float(_first(props, ("lat", "latitude", "y", "gps_lat", "gpsLatitude")))
-    lon = _float(_first(props, ("lon", "lng", "longitude", "x", "gps_lon", "gpsLongitude")))
-
-    geometry = item.get("geometry")
-    if (lat is None or lon is None) and isinstance(geometry, dict):
-        coords = geometry.get("coordinates")
-        if isinstance(coords, (list, tuple)) and len(coords) >= 2:
-            lon = _float(coords[0])
-            lat = _float(coords[1])
-
-    if lat is None or lon is None or not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
-        return None
-
-    name = _first(props, ("name", "station_name", "stationName", "station", "title", "degaline"))
-    network = _first(props, ("network", "brand", "company", "company_name", "operator", "operator_name", "chain", "tinklas", "imone"))
-    address = _first(props, ("address", "addr", "full_address", "location", "adresas"))
-
-    name_s = str(name or network or "Degalinė").strip()
-    network_s = str(network or name or "").strip()
-    address_s = str(address or "").strip()
-
-    return Station(
-        name=name_s,
-        network=network_s,
-        address=address_s,
-        latitude=lat,
-        longitude=lon,
-        prices=_extract_prices(props),
-    )
-
-
-def parse_api_payload(payload: Any) -> ApiData:
-    """Parse a few common static-JSON / GeoJSON layouts defensively."""
-    data_date: str | None = None
-    raw_stations: Any = payload
-
-    if isinstance(payload, dict):
-        date_value = _first(payload, ("date", "data_date", "prices_date", "updated", "updated_at", "generated_at"))
-        if date_value is not None:
-            data_date = str(date_value)
-
-        for key in ("stations", "items", "features", "data", "results"):
-            candidate = payload.get(key)
-            if isinstance(candidate, list):
-                raw_stations = candidate
-                break
-            if isinstance(candidate, dict):
-                for subkey in ("stations", "items", "features", "results"):
-                    sub = candidate.get(subkey)
-                    if isinstance(sub, list):
-                        raw_stations = sub
-                        break
-                if isinstance(raw_stations, list):
-                    break
-
-    if isinstance(raw_stations, dict):
-        values = list(raw_stations.values())
-        if values and all(isinstance(value, dict) for value in values):
-            raw_stations = values
-
-    if not isinstance(raw_stations, list):
-        raise TusciasBakasApiError("API atsakymas neturi atpažįstamo degalinių sąrašo")
-
-    stations = [station for item in raw_stations if (station := _extract_station(item))]
     if not stations:
-        raise TusciasBakasApiError("API atsakyme nepavyko atpažinti degalinių koordinačių")
+        raise KurohudasApiError("Kurohudas puslapyje nerasta degalinių lentelė")
 
     return ApiData(stations=stations, data_date=data_date)
 
 
-class TusciasBakasApi:
-    """Small async API client."""
+def parse_coordinates(html: str) -> tuple[float, float] | None:
+    """Extract coordinates from Google Maps navigation link."""
+    match = _COORD_RE.search(html)
+    if match:
+        return float(match.group(1)), float(match.group(2))
+
+    for href in re.findall(
+        r'href=["\']([^"\']*google\.com/maps/dir/[^"\']*)',
+        html,
+    ):
+        parsed = urlparse(href.replace("&amp;", "&"))
+        destination = parse_qs(parsed.query).get("destination")
+        if not destination:
+            continue
+        parts = unquote(destination[0]).split(",", 1)
+        if len(parts) != 2:
+            continue
+        try:
+            return float(parts[0]), float(parts[1])
+        except ValueError:
+            continue
+    return None
+
+
+class KurohudasApi:
+    """Async Kurohudas web client."""
 
     def __init__(self, session: ClientSession) -> None:
         self._session = session
+        self._headers = {
+            "User-Agent": "HomeAssistant TuščiasBakas integration/0.3",
+            "Accept-Language": "lt-LT,lt;q=0.9,en;q=0.7",
+        }
 
-    async def async_get_stations(self) -> ApiData:
+    async def _get_text(self, url: str) -> str:
         try:
-            async with self._session.get(API_URL, timeout=20) as response:
+            async with self._session.get(
+                url,
+                headers=self._headers,
+                timeout=30,
+            ) as response:
                 if response.status != 200:
-                    raise TusciasBakasApiError(f"HTTP {response.status}")
-                payload = await response.json(content_type=None)
-        except (ClientError, TimeoutError, ValueError) as err:
-            raise TusciasBakasApiError(str(err)) from err
-        return parse_api_payload(payload)
+                    raise KurohudasApiError(f"HTTP {response.status}: {url}")
+                return await response.text()
+        except (ClientError, TimeoutError) as err:
+            raise KurohudasApiError(str(err)) from err
+
+    async def async_get_stations(self, city: str) -> ApiData:
+        url = f"{KUROHUDAS_BASE_URL}/miestas/{quote(city.strip(), safe='')}"
+        return parse_city_page(await self._get_text(url))
+
+    async def async_get_coordinates(
+        self,
+        detail_url: str,
+    ) -> tuple[float, float] | None:
+        return parse_coordinates(await self._get_text(detail_url))
 
 
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """Haversine straight-line distance in kilometres."""
+    import math
+
     r = 6371.0088
     p1 = math.radians(lat1)
     p2 = math.radians(lat2)
