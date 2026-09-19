@@ -31,16 +31,18 @@ def _station_attrs(station: dict[str, Any] | None) -> dict[str, Any]:
     return {
         "station_name": station.get("name"),
         "network": station.get("network"),
+        "company_name": station.get("company_name"),
         "address": station.get("address"),
         "distance_km": station.get("distance_km"),
         "advertised_price": station.get("price"),
         "discount_eur_l": station.get("discount_eur_l"),
         "effective_price": station.get("effective_price"),
         "price_updated": station.get("price_updated"),
+        "price_from_cache": station.get("price_from_cache", False),
         "latitude": station.get("latitude"),
         "longitude": station.get("longitude"),
         "discount_rules": station.get("discount_rules", []),
-        "logo_url": station_logo_url(station),
+        "logo_url": station.get("logo_url"),
         "source": station.get("source"),
         "detail_url": station.get("detail_url"),
     }
@@ -52,6 +54,7 @@ def _top_attrs(key: str, station_key: str):
         attrs = _station_attrs(station)
         attrs["top_10"] = data.get(key, [])
         return attrs
+
     return inner
 
 
@@ -166,9 +169,9 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
         self._attr_device_info = {
             "identifiers": {(DOMAIN, entry.entry_id)},
             "name": "Tuščias bakas",
-            "manufacturer": "Kurohudas.lt",
-            "model": "Fuel prices",
-            "configuration_url": "https://www.kurohudas.lt/",
+            "manufacturer": "Lietuvos energetikos agentūra (LEA)",
+            "model": "Degalų kainos",
+            "configuration_url": "https://degalukainos.ena.lt/",
         }
 
     @property
@@ -180,7 +183,15 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
         key = self.entity_description.station_key
         if not key:
             return None
-        return station_logo_url(self.coordinator.data.get(key))
+
+        station = self.coordinator.data.get(key)
+        if not station:
+            return None
+
+        official_logo = station.get("logo_url")
+        if official_logo:
+            return str(official_logo)
+        return station_logo_url(station)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -188,7 +199,6 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
         attrs = {
             "attribution": ATTRIBUTION,
             "source": self.coordinator.data.get("source"),
-            "city": self.coordinator.data.get("city"),
             "fuel_type": FUEL_TYPES.get(
                 self.coordinator.fuel_type,
                 self.coordinator.fuel_type,
