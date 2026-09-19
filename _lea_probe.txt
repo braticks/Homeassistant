@@ -1,6 +1,6 @@
 HTML_LENGTH=2246
 SCRIPTS:
-/TSbd/081b474992ab2000b9e221bbd7aa5966f5d7042fb7c17a9b3c5bec15c2cab3e59141ebc9ed672424?type=2
+/TSbd/081b474992ab2000efbb5259ce6ad776b5f78a542387194259226438cb564c5e9ca3841a70c5f35f?type=2
 ./assets/index-DJ-BlfNT.js
 https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
 https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495
@@ -9,7 +9,7 @@ https://fonts.googleapis.com
 https://fonts.gstatic.com
 https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap
 ./assets/index-QzSQSHQU.css
-JS https://degalukainos.ena.lt/TSbd/081b474992ab2000b9e221bbd7aa5966f5d7042fb7c17a9b3c5bec15c2cab3e59141ebc9ed672424?type=2 LENGTH=55985
+JS https://degalukainos.ena.lt/TSbd/081b474992ab2000efbb5259ce6ad776b5f78a542387194259226438cb564c5e9ca3841a70c5f35f?type=2 LENGTH=51989
 JS https://degalukainos.ena.lt/assets/index-DJ-BlfNT.js LENGTH=217334
 CANDIDATE #fuel-price-site-app
 CANDIDATE )?i.default:i}var Fi={exports:{}};/* @preserve
@@ -47,7 +47,14 @@ CANDIDATE )setTimeout(function(){URL.revokeObjectURL(i)},6e4);return chrome.down
 CANDIDATE ){var $w=undefined;if(($w||{}).Readable)zw($w.Readable)}}if(typeof exports!==
 CANDIDATE )};var D=function Y(t){return!!(e[t]||r[t])};e.utils={decode:N,encode:I,hascp:D,magic:r,cache:S};return e});var XLSX={};function make_xlsx_lib(e){e.version=
 CANDIDATE )}function br(e){if(typeof JSON!=
+CANDIDATE +v++}while(b[o]);b[f]=v;b[o]=1}s[m]=o;}}g=l.s.r+i;t._read=function(){while(g<=l.e.r){if((k[g-1]||{}).hidden)continue;var r=Tw(e,l,g,d,n,s,p,c);++g;if(r.isempty===false||(n===1?c.blankrows!==false:!!c.blankrows)){t.push(r.row);return}}return t.push(null)};return t}var Xw={to_json:jw,to_html:Gw,to_csv:Vw,set_readable:zw};if(typeof vm!==
 CANDIDATE /><title>SheetJS Table Export</title></head><body>
+CANDIDATE ODDFPRICE
+CANDIDATE ODDLPRICE
+CANDIDATE PRICE
+CANDIDATE PRICEDISC
+CANDIDATE PRICEMAT
+CANDIDATE TBILLPRICE
 CANDIDATE ]||c.name;if(typeof JSON!==
 CANDIDATE csv
 CANDIDATE downloadcomponents
@@ -136,6 +143,7 @@ JS https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7
 CANDIDATE !=typeof e.destination.sameDocument||e.destination.sameDocument?(j(),m=null!==(i=null===(n=null==e?void 0:e.destination)||void 0===n?void 0:n.url)&&void 0!==i?i:m,p(m,{navigationType:t.NavigationType.RoutingApis}),D(m)):A=!0)};return window.navigation.addEventListener(
 CANDIDATE ,buffered:!0})}catch(t){return null}return i}()),T||y!==t.SpaMonitoringType.HistoryAndNavigationAPI&&y!==t.SpaMonitoringType.SoftNavigationHeuristics||(S=function(){if(!(
 CANDIDATE ,e),e}(),S||(_=window.history,(H=_.pushState)&&(_.pushState=function(e,i,o){const r=n(o);return m!=r&&(R(m),j(),p(r,{navigationType:t.NavigationType.RoutingApis}),D(r),m=r),H.apply(_,[e,i,o])},window.addEventListener(
+CANDIDATE ,function(e){m!=n()&&(R(m),j(),m=n(),p(m,{navigationType:t.NavigationType.RoutingApis}),D(m))})))));const q=new Set(Object.keys(t.NavigationType).map(e=>t.NavigationType[e]));function K(t){var e;return null===(e=V(t))||void 0===e?void 0:e.navigationType}function $(){if(!v||!v.serverTiming)return;let t=[];for(const e of[
 CANDIDATE ,t.RoutingApis=
 CANDIDATE ,t[t.HistoryAndNavigationAPI=1]=
 CANDIDATE ,{value:function(t){const e=Math.trunc(t)||0,n=e>=0?e:this.length+e;if(!(n<0||n>=this.length))return this[n]},writable:!0,configurable:!0,enumerable:!1})}},e={};function n(i){var o=e[i];if(void 0!==o)return o.exports;var r=e[i]={exports:{}};return t[i].call(r.exports,r,r.exports,n),r.exports}(()=>{
@@ -148,3 +156,160 @@ CANDIDATE application/json
 CANDIDATE https://cloudflareinsights.com/cdn-cgi/rum
 CANDIDATE },bi:(c=C,c.bv||c.ov||c.be||c.bev?C:void 0)};var c;return S&&s.nt===t.NavigationType.RoutingApis&&(s.ntapi=1),s}function J(t){var e;if(
 CANDIDATE },o=navigator.sendBeacon&&navigator.sendBeacon.bind(navigator);null==o||o(a,new Blob([t],n))}else{e.st=i.SendType.XHR;const t=JSON.stringify(e),o=new XMLHttpRequest;n&&(o.onreadystatechange=function(){4==this.readyState&&204==this.status&&n()}),o.open(
+JS https://degalukainos.ena.lt/assets/FuelPriceSiteApp-D7c-syZH.js LENGTH=53375
+CANDIDATE  Degalais prekiaujančios įmonės pateikia LEA informaciją apie degalų kainas, kurios buvo tą darbo dieną 10 val. Savanoriškai dažniau informaciją teikiančių degalinių kainos gali būti atnaujinamos ir realiuoju laiku. Degalinės gali bet kuriuo metu pakeisti degalų kainas. Informacija skelbiama be degalais prekiaujančių įmonių taikomų lojalumo programų. 
+CANDIDATE  LEA, degalais prekiaujančios įmonės. Naudojant šią informaciją, būtina nurodyti šaltinį – LEA bei pirminį šaltinį – degalinę valdančios įmonės pavadinimą.
+CANDIDATE  Rodyti visas kainas 
+CANDIDATE  Tik 5 pigiausios degalinės 
+CANDIDATE  data-v-7fb94757>Arba atsidarykite sąrašą ir peržiūrėkite degalų kainas.</div></div><div class=
+CANDIDATE  data-v-7fb94757>Arba atsisiųskite sąrašą ir peržiūrėkite degalų kainas.</div></div><div class=
+CANDIDATE  data-v-7fb94757>Naudokite paiešką, kad greičiau rastumėte artimiausią degalinę.</div></div>
+CANDIDATE  data-v-7fb94757>Spustelkite degalinę.</div></div><div class=
+CANDIDATE  Žemėlapis 
+CANDIDATE ${J}>🚗 Važiuoti</a>
+            </div>
+        </div>
+    `}function Fe(l,n){const c=si(l.gas_station_name,l.company_name),E=[n,c.brandClass].filter(Boolean).join(
+CANDIDATE ),E=Number.parseFloat(n==null?void 0:n.price),q=Number.isFinite(E)?E.toFixed(3):
+CANDIDATE ),style:ut(t.tablePriceRecords(r).length>1?null:{display:
+CANDIDATE );const b=window.XLSX.write(r,{bookType:
+CANDIDATE );u.href=y,u.download=`degalu-kainos-${new Date().toISOString().slice(0,10)}.xlsx`,document.body.appendChild(u),u.click(),document.body.removeChild(u),URL.revokeObjectURL(y)}function ci(){const t=w([]),o=w(!0),i=w(
+CANDIDATE )?l.records.snd:l.displayPriceRecord,c=Fe(l,
+CANDIDATE )}function ui(t,o){if(t.length===0)return;if(typeof window.XLSX>
+CANDIDATE )}});const r=window.XLSX.utils.book_new();window.XLSX.utils.book_append_sheet(r,a,
+CANDIDATE ,!0)],6)])],10,Ga))),128))])])])]))}},ii={apiBase:
+CANDIDATE ,-1)])])):(f(!0),g(te,{key:3},ae(t.stations,r=>(f(),g(
+CANDIDATE ,-1)])])):t.loadError&&t.stations.length===0?(f(),g(
+CANDIDATE ,Ea,z(t.globalStats.stations),1)])]),e(
+CANDIDATE ,Za,z(t.loadError),1)])):t.stations.length===0?(f(),g(
+CANDIDATE ,null,z(t.formatRecordPrice(b)),1)]))),128)),t.tablePriceRecords(r).length===0?(f(),g(
+CANDIDATE ,null,z(t.priceRange.max),1),i[2]||(i[2]=N(
+CANDIDATE ,null,z(t.priceRange.min),1)]),e(
+CANDIDATE ,o.value=!1;return}try{const k=await fetch(`${m.apiBase}/read/prices/latest`,{headers:{Authorization:`Bearer ${m.token}`}});if(!k.ok)throw new Error(`API returned ${k.status}`);const M=await k.json();t.value=M.data||[],i.value=
+CANDIDATE ,r))},z(t.activeFuelOption.short),11,gt),e(
+CANDIDATE ,ve=l.gas_station_name||l.company_name;return`
+        <div class=
+CANDIDATE ,{class:P(t.tablePriceRecords(r).length>1?
+CANDIDATE ,{href:$(Yt),download:
+CANDIDATE ,{key:b.fuel_type,class:
+CANDIDATE ,{key:r.key,class:P({active:r.key===t.activeStationKey}),onClick:b=>i(
+CANDIDATE :$(k),stations:$(Y),
+CANDIDATE :s.value,onToggleFuelMenu:et,onSelectFuel:Je,onToggleGps:at,onToggleFilters:n[0]||(n[0]=c=>s.value=!s.value),onExportExcel:lt,onShowTable:n[1]||(n[1]=c=>a.value=
+CANDIDATE :t.fuelMenuOpen,onClick:a[0]||(a[0]=r=>i(
+CANDIDATE :t.fuel_type===o}function Z(t,o=!0){const i=Number.parseFloat(t),s=Number.isFinite(i)?i.toFixed(3).replace(
+CANDIDATE ;const i=Number.parseFloat(t==null?void 0:t.price);return Number.isFinite(i)?i.toFixed(3).replace(
+CANDIDATE >Dienos metu degalinės kainas gali keisti.</li><li style=
+CANDIDATE >Kainos darbo dienomis pateikiamos pagal 10:00 val. duomenis.</li><li style=
+CANDIDATE >Savanoriškai dažniau informaciją teikiančių degalinių kainos gali būti atnaujinamos ir realiuoju laiku.</li><li style=
+CANDIDATE ?`${s} €`:s}function Ve(t){return t?Z(t.price):
+CANDIDATE ?k=k.filter(h=>h.records.snd&&h.records.benzinas_95):k=k.filter(h=>h.records[s.value]);const M=k.map(h=>Be(h,s.value)).map(h=>Number.parseFloat(h==null?void 0:h.price)).filter(Number.isFinite);if(M.length===0)return{min:
+CANDIDATE ?t.fuel_type===
+CANDIDATE Bendra kaina, Eur/l
+CANDIDATE Degalinių sąrašas
+CANDIDATE Degalinė / Vieta
+CANDIDATE Degalinės
+CANDIDATE Degalinės pavadinimas
+CANDIDATE Degalų kainos Lietuvoje
+CANDIDATE Degalų rūšys
+CANDIDATE Duomenų būsena ir kainos
+CANDIDATE Failed to load LEA prices database:
+CANDIDATE FuelPriceSiteApp
+CANDIDATE FuelPriceSiteContactModal
+CANDIDATE FuelPriceSiteContactPanel
+CANDIDATE FuelPriceSiteControls
+CANDIDATE FuelPriceSiteFilters
+CANDIDATE FuelPriceSiteHeader
+CANDIDATE FuelPriceSiteInfoModal
+CANDIDATE FuelPriceSiteInstructionModal
+CANDIDATE FuelPriceSiteMultiselect
+CANDIDATE FuelPriceSiteNoticeModal
+CANDIDATE FuelPriceSiteResultsMeta
+CANDIDATE FuelPriceSiteSummary
+CANDIDATE FuelPriceSiteTable
+CANDIDATE Interaktyvus degalinių žemėlapis
+CANDIDATE Kaina, Eur/l
+CANDIDATE Kainų filtras
+CANDIDATE Pasirinkite degalų tipą.
+CANDIDATE Pasirinkti degalų rūšį
+CANDIDATE ]))},[(f(!0),g(te,null,ae(t.fuelOptions,r=>(f(),g(
+CANDIDATE ],...i.map(d=>[d[0],d[1],d[2],d[3],d[4],ke(d[5]),ke(d[6]),ke(d[7])])],a=window.XLSX.utils.aoa_to_sheet(s);a[
+CANDIDATE ].map(T=>{const le=l.fuel_types&&l.fuel_types.includes(T),Pe=n.find(rt=>rt.fuel_type===T);let me=
+CANDIDATE active-fuel
+CANDIDATE active-fuel-option
+CANDIDATE active-station-key
+CANDIDATE btn-fuel
+CANDIDATE download-csv-btn
+CANDIDATE download-divider
+CANDIDATE download-pptx-link
+CANDIDATE export-excel
+CANDIDATE format-record-price
+CANDIDATE fuel-95
+CANDIDATE fuel-active-95
+CANDIDATE fuel-active-d
+CANDIDATE fuel-active-snd
+CANDIDATE fuel-active-snd-95
+CANDIDATE fuel-active-snd-d
+CANDIDATE fuel-badge
+CANDIDATE fuel-badge ${Ie(t)}
+CANDIDATE fuel-badge-class
+CANDIDATE fuel-badge-text
+CANDIDATE fuel-d
+CANDIDATE fuel-dot
+CANDIDATE fuel-dot-95
+CANDIDATE fuel-dot-d
+CANDIDATE fuel-dot-snd
+CANDIDATE fuel-dot-snd-95
+CANDIDATE fuel-dot-snd-d
+CANDIDATE fuel-dropdown-wrapper
+CANDIDATE fuel-lpg
+CANDIDATE fuel-menu
+CANDIDATE fuel-menu-open
+CANDIDATE fuel-option
+CANDIDATE fuel-options
+CANDIDATE fuel-options-menu
+CANDIDATE fuel-select-btn
+CANDIDATE http://www.w3.org/2000/svg
+CANDIDATE https://api-degalukainos.ena.lt/api/v1
+CANDIDATE https://nominatim.openstreetmap.org/search?format=json&countrycodes=lt&q=${encodeURIComponent(l
+CANDIDATE https://www.ena.lt
+CANDIDATE https://www.ena.lt/degalu-kainos-degalinese/
+CANDIDATE https://www.google.com/maps/dir/?api=1&destination=${o},${i}`,external:!0}}function
+CANDIDATE https://www.openstreetmap.org/copyright
+CANDIDATE https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+CANDIDATE instruction-download-section
+CANDIDATE lea-marker-price
+CANDIDATE popup-price-label
+CANDIDATE popup-price-left
+CANDIDATE popup-price-row
+CANDIDATE popup-price-value
+CANDIDATE price-checkbox-group
+CANDIDATE price-gradient-bar
+CANDIDATE price-gradient-bar-static
+CANDIDATE price-label-center
+CANDIDATE price-label-left
+CANDIDATE price-label-right
+CANDIDATE price-labels-row
+CANDIDATE price-labels-row static-price-labels
+CANDIDATE price-range
+CANDIDATE price-range-info
+CANDIDATE prices-banner
+CANDIDATE prices-banner-left
+CANDIDATE prices-banner-right
+CANDIDATE select-fuel
+CANDIDATE select-station
+CANDIDATE stations
+CANDIDATE stations-table
+CANDIDATE table-price-records
+CANDIDATE td-price
+CANDIDATE td-station-address
+CANDIDATE td-station-title
+CANDIDATE toggle-fuel-menu
+CANDIDATE visual-btn-circle active fuel-active-d
+CANDIDATE visual-marker-price
+CANDIDATE ||t.fuel_type===
+CANDIDATE })},[(f(!0),g(te,null,ae(t.tablePriceRecords(r),b=>(f(),g(
+CANDIDATE },150)});const r=b=>{b.preventDefault(),s.value&&a.value&&(window.location.href=`mailto:${s.value}@${a.value}?subject=LEA%20degalu%20kainos`)};return(b,v)=>(f(),g(
+CANDIDATE }:{min:`${Z(Math.min(...m),!1)} €`,max:`${Z(Math.max(...m),!1)} €`}});async function Q(m){if(!m.apiBase||!m.token){i.value=
+CANDIDATE }finally{F.value=!1}}}async function Ce(l){return(await fetch(`https://nominatim.openstreetmap.org/search?format=json&countrycodes=lt&q=${encodeURIComponent(l)}`)).json()}async function at(){var l;if(W.value){W.value=!1,G.value=null,A.value&&S.value&&(S.value.removeLayer(A.value),A.value=null);return}if(!navigator.geolocation){k.value=
+CANDIDATE }function be(t,o){return!t||!Array.isArray(t.fuel_types)?!0:t.fuel_types.includes(o)}function ye(t,o=!0){if(!o)return
+JS https://degalukainos.ena.lt/assets/leaflet.markercluster-src-Cg_8v5Rr.js LENGTH=34692
