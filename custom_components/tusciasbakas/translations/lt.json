@@ -4,28 +4,15 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Pasirinkite vietą, spindulį ir kurą. Kiekvieną nuolaidą rašykite į atskirą lauką formatu: Degalinė;dienos;€/l, pvz. Circle K;fri;0.10",
+        "description": "Pasirinkite vietą, spindulį ir kurą. Degalinių filtrus bei nuolaidas galėsite patogiai keisti per Configure po integracijos pridėjimo.",
         "data": {
           "latitude": "Platuma",
           "longitude": "Ilguma",
           "radius_km": "Paieškos spindulys",
           "fuel_type": "Kuro tipas",
-          "update_minutes": "Atnaujinimo intervalas",
-          "discount_rule_1": "Nuolaida 1",
-          "discount_rule_2": "Nuolaida 2",
-          "discount_rule_3": "Nuolaida 3",
-          "discount_rule_4": "Nuolaida 4",
-          "discount_rule_5": "Nuolaida 5",
-          "discount_rule_6": "Nuolaida 6",
-          "discount_rule_7": "Nuolaida 7",
-          "discount_rule_8": "Nuolaida 8",
-          "discount_rule_9": "Nuolaida 9",
-          "discount_rule_10": "Nuolaida 10"
+          "update_minutes": "Atnaujinimo intervalas"
         }
       }
-    },
-    "error": {
-      "invalid_discount_rules": "Neteisinga bent viena nuolaidos taisyklė. Naudokite: Degalinė;dienos;nuolaida, pvz. Circle K;fri;0.10"
     },
     "abort": {
       "already_configured": "Integracija jau sukonfigūruota."
@@ -35,28 +22,44 @@
     "step": {
       "init": {
         "title": "Tuščias bakas nustatymai",
-        "description": "Dienos: mon,tue,wed,thu,fri,sat,sun arba pir,ant,tre,ket,pen,ses,sek. 'all' – kasdien. Kiekviena nuolaida rašoma į atskirą lauką.",
+        "description": "Pasirinkite, ką norite pakeisti."
+      },
+      "general": {
+        "title": "Bendri nustatymai",
         "data": {
           "latitude": "Platuma",
           "longitude": "Ilguma",
           "radius_km": "Paieškos spindulys",
           "fuel_type": "Kuro tipas",
-          "update_minutes": "Atnaujinimo intervalas",
-          "discount_rule_1": "Nuolaida 1",
-          "discount_rule_2": "Nuolaida 2",
-          "discount_rule_3": "Nuolaida 3",
-          "discount_rule_4": "Nuolaida 4",
-          "discount_rule_5": "Nuolaida 5",
-          "discount_rule_6": "Nuolaida 6",
-          "discount_rule_7": "Nuolaida 7",
-          "discount_rule_8": "Nuolaida 8",
-          "discount_rule_9": "Nuolaida 9",
-          "discount_rule_10": "Nuolaida 10"
+          "update_minutes": "Atnaujinimo intervalas"
+        }
+      },
+      "networks": {
+        "title": "Degalinių filtravimas",
+        "description": "Pažymėkite tinklus, kurių visai nenorite matyti rezultatuose.",
+        "data": {
+          "excluded_networks": "Nerodyti šių degalinių tinklų"
+        }
+      },
+      "discounts": {
+        "title": "Nuolaidos",
+        "description": "Dabar nustatyta:\n{existing}"
+      },
+      "add_discount": {
+        "title": "Pridėti nuolaidą",
+        "description": "Pasirinkite degalinių tinklą, dienas ir nuolaidos dydį. Nieko ranka pagal specialų formatą rašyti nereikia.",
+        "data": {
+          "network": "Degalinių tinklas",
+          "weekdays": "Kuriomis dienomis galioja",
+          "amount": "Nuolaida €/l"
+        }
+      },
+      "remove_discount": {
+        "title": "Pašalinti nuolaidą",
+        "data": {
+          "discount_index": "Kurią nuolaidą pašalinti"
         }
       }
-    },
-    "error": {
-      "invalid_discount_rules": "Neteisinga bent viena nuolaidos taisyklė."
     }
   },
   "entity": {
@@ -66,6 +69,7 @@
       "cheapest_effective_price": {"name": "Pigiausia kaina su nuolaidomis"},
       "cheapest_effective_station": {"name": "Pigiausia degalinė su nuolaida"},
       "nearest_station": {"name": "Artimiausia degalinė"},
+      "nearest_distance": {"name": "Atstumas iki artimiausios degalinės"},
       "station_count": {"name": "Degalinių spindulyje"}
     }
   }
