@@ -15,6 +15,8 @@ from homeassistant.util import dt as dt_util
 from .api import TusciasBakasApi, TusciasBakasApiError, distance_km
 from .const import (
     CONF_DISCOUNT_RULES,
+    CONF_DISCOUNTS,
+    CONF_EXCLUDED_NETWORKS,
     CONF_FUEL_TYPE,
     CONF_LATITUDE,
     CONF_LONGITUDE,
@@ -25,7 +27,7 @@ from .const import (
     DEFAULT_UPDATE_MINUTES,
     DOMAIN,
 )
-from .discounts import parse_discount_rules
+from .discounts import parse_discount_rules, rules_from_structured
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +42,24 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.longitude = float(options.get(CONF_LONGITUDE, hass.config.longitude))
         self.radius_km = float(options.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM))
         self.fuel_type = str(options.get(CONF_FUEL_TYPE, DEFAULT_FUEL_TYPE))
-        self.discount_rules_text = str(options.get(CONF_DISCOUNT_RULES, ""))
-        self.discount_rules, _ = parse_discount_rules(self.discount_rules_text)
+        self.excluded_networks = {
+            str(value).strip().casefold()
+            for value in options.get(CONF_EXCLUDED_NETWORKS, [])
+            if str(value).strip()
+        }
+
+        if CONF_DISCOUNTS in entry.options:
+            self.discount_rules = rules_from_structured(
+                entry.options.get(CONF_DISCOUNTS, [])
+            )
+        elif CONF_DISCOUNTS in entry.data:
+            self.discount_rules = rules_from_structured(
+                entry.data.get(CONF_DISCOUNTS, [])
+            )
+        else:
+            legacy_text = str(options.get(CONF_DISCOUNT_RULES, ""))
+            self.discount_rules, _ = parse_discount_rules(legacy_text)
+
         update_minutes = int(options.get(CONF_UPDATE_MINUTES, DEFAULT_UPDATE_MINUTES))
         self.api = TusciasBakasApi(async_get_clientsession(hass))
 
@@ -56,7 +74,9 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             api_data = await self.api.async_get_stations()
         except TusciasBakasApiError as err:
-            raise UpdateFailed(f"Nepavyko gauti Tuščias bakas duomenų: {err}") from err
+            raise UpdateFailed(
+                f"Nepavyko gauti Tuščias bakas duomenų: {err}"
+            ) from err
 
         today = dt_util.now().date()
         rows: list[dict[str, Any]] = []
@@ -64,6 +84,10 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         for station in api_data.stations:
             price = station.prices.get(self.fuel_type)
             if price is None:
+                continue
+
+            network_name = (station.network or station.name or "").strip()
+            if network_name.casefold() in self.excluded_networks:
                 continue
 
             dist = distance_km(
@@ -75,8 +99,14 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if dist > self.radius_km:
                 continue
 
-            station_text = " ".join(filter(None, (station.network, station.name, station.address)))
-            active = [rule for rule in self.discount_rules if rule.active(station_text, today)]
+            station_text = " ".join(
+                filter(None, (station.network, station.name, station.address))
+            )
+            active = [
+                rule
+                for rule in self.discount_rules
+                if rule.active(station_text, today)
+            ]
             discount = round(sum(rule.amount_eur_l for rule in active), 3)
             effective = max(0.0, round(price - discount, 3))
 
@@ -95,8 +125,14 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 }
             )
 
-        by_price = sorted(rows, key=lambda row: (row["price"], row["distance_km"]))
-        by_effective = sorted(rows, key=lambda row: (row["effective_price"], row["distance_km"]))
+        by_price = sorted(
+            rows,
+            key=lambda row: (row["price"], row["distance_km"]),
+        )
+        by_effective = sorted(
+            rows,
+            key=lambda row: (row["effective_price"], row["distance_km"]),
+        )
         by_distance = sorted(rows, key=lambda row: row["distance_km"])
 
         return {
