@@ -3,14 +3,11 @@
 DOMAIN = "tusciasbakas"
 NAME = "Tuščias bakas"
 
-KUROHUDAS_BASE_URL = "https://www.kurohudas.lt"
-DEFAULT_CITY = "Kaunas"
+LEA_SITE_URL = "https://degalukainos.ena.lt/"
 DEFAULT_RADIUS_KM = 10.0
 DEFAULT_FUEL_TYPE = "petrol_95"
 DEFAULT_UPDATE_MINUTES = 60
-
-# Kurohudas city pages contain stations within 12 km of the selected city.
-MAX_RADIUS_KM = 12.0
+MAX_RADIUS_KM = 50.0
 
 # First-run default: only these major networks are visible.
 DEFAULT_VISIBLE_NETWORK_PATTERNS = (
@@ -37,4 +34,6 @@ FUEL_TYPES = {
     "lpg": "SND (dujos)",
 }
 
-ATTRIBUTION = "Kainų šaltinis: Kurohudas.lt"
+ATTRIBUTION = (
+    "Duomenys: Lietuvos energetikos agentūra (LEA) ir degalines valdančios įmonės"
+)
