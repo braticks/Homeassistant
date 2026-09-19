@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-from datetime import timedelta
+from datetime import date, timedelta
 import logging
 from typing import Any
 
@@ -14,9 +13,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
-from .api import KurohudasApi, KurohudasApiError, Station, distance_km
+from .api import LeaApiError, LeaFuelApi, Station, distance_km
 from .const import (
-    CONF_CITY,
     CONF_DISCOUNT_RULES,
     CONF_DISCOUNTS,
     CONF_EXCLUDED_NETWORKS,
@@ -25,21 +23,23 @@ from .const import (
     CONF_LONGITUDE,
     CONF_RADIUS_KM,
     CONF_UPDATE_MINUTES,
-    DEFAULT_CITY,
     DEFAULT_FUEL_TYPE,
     DEFAULT_RADIUS_KM,
     DEFAULT_UPDATE_MINUTES,
     DEFAULT_VISIBLE_NETWORK_PATTERNS,
     DOMAIN,
+    LEA_SITE_URL,
+    MAX_RADIUS_KM,
 )
 from .discounts import parse_discount_rules, rules_from_structured
 
 _LOGGER = logging.getLogger(__name__)
-_COORD_STORE_VERSION = 1
+_CACHE_VERSION = 1
+_CACHE_MAX_AGE_DAYS = 7
 
 
 class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Fetch Kurohudas prices and calculate nearby station results."""
+    """Fetch official LEA prices and calculate nearby station results."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self.entry = entry
@@ -47,10 +47,9 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.latitude = float(options.get(CONF_LATITUDE, hass.config.latitude))
         self.longitude = float(options.get(CONF_LONGITUDE, hass.config.longitude))
         self.radius_km = min(
-            12.0,
+            MAX_RADIUS_KM,
             float(options.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM)),
         )
-        self.city = str(options.get(CONF_CITY, DEFAULT_CITY)).strip() or DEFAULT_CITY
         self.fuel_type = str(options.get(CONF_FUEL_TYPE, DEFAULT_FUEL_TYPE))
 
         self.has_custom_network_filter = (
@@ -76,13 +75,14 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self.discount_rules, _ = parse_discount_rules(legacy_text)
 
         update_minutes = int(options.get(CONF_UPDATE_MINUTES, DEFAULT_UPDATE_MINUTES))
-        self.api = KurohudasApi(async_get_clientsession(hass))
-        self._coord_store = Store(
+        self.api = LeaFuelApi(async_get_clientsession(hass))
+
+        self._price_store = Store(
             hass,
-            _COORD_STORE_VERSION,
-            f"{DOMAIN}_kurohudas_coordinates",
+            _CACHE_VERSION,
+            f"{DOMAIN}_last_non_null_prices",
         )
-        self._coord_cache: dict[str, list[float]] | None = None
+        self._price_cache: dict[str, dict[str, Any]] | None = None
 
         super().__init__(
             hass,
@@ -92,82 +92,66 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def _network_allowed(self, station: Station) -> bool:
-        network_cf = (station.network or station.name or "").strip().casefold()
+        network_cf = station.network.casefold()
         if self.has_custom_network_filter:
-            return network_cf not in self.excluded_networks
+            return not any(
+                excluded == network_cf
+                or excluded in network_cf
+                or network_cf in excluded
+                for excluded in self.excluded_networks
+            )
         return any(
             pattern in network_cf
             for pattern in DEFAULT_VISIBLE_NETWORK_PATTERNS
         )
 
-    async def _ensure_coordinate_cache(self) -> None:
-        if self._coord_cache is not None:
+    @staticmethod
+    def _cache_key(station: Station, fuel_type: str) -> str:
+        return "|".join(
+            (
+                station.company_name.casefold(),
+                station.name.casefold(),
+                station.address.casefold(),
+                fuel_type,
+            )
+        )
+
+    async def _ensure_cache(self) -> None:
+        if self._price_cache is not None:
             return
-        loaded = await self._coord_store.async_load()
-        self._coord_cache = loaded if isinstance(loaded, dict) else {}
+        loaded = await self._price_store.async_load()
+        self._price_cache = loaded if isinstance(loaded, dict) else {}
 
-    async def _resolve_station_coordinates(self, station: Station) -> bool:
-        await self._ensure_coordinate_cache()
-        assert self._coord_cache is not None
-
-        cached = self._coord_cache.get(station.detail_url)
-        if (
-            isinstance(cached, list)
-            and len(cached) == 2
-            and all(isinstance(value, (int, float)) for value in cached)
-        ):
-            station.latitude = float(cached[0])
-            station.longitude = float(cached[1])
-            return True
-
+    @staticmethod
+    def _cached_price_is_fresh(updated: str | None) -> bool:
+        if not updated:
+            return False
         try:
-            coords = await self.api.async_get_coordinates(station.detail_url)
-        except KurohudasApiError as err:
-            _LOGGER.debug("Nepavyko gauti %s koordinačių: %s", station.name, err)
+            updated_date = date.fromisoformat(updated[:10])
+        except ValueError:
             return False
-
-        if coords is None:
-            return False
-
-        station.latitude, station.longitude = coords
-        self._coord_cache[station.detail_url] = [coords[0], coords[1]]
-        return True
-
-    async def _resolve_missing_coordinates(self, stations: list[Station]) -> None:
-        await self._ensure_coordinate_cache()
-        assert self._coord_cache is not None
-
-        before = len(self._coord_cache)
-        semaphore = asyncio.Semaphore(5)
-
-        async def resolve(station: Station) -> None:
-            async with semaphore:
-                await self._resolve_station_coordinates(station)
-
-        await asyncio.gather(*(resolve(station) for station in stations))
-        if len(self._coord_cache) != before:
-            await self._coord_store.async_save(self._coord_cache)
+        age = dt_util.now().date() - updated_date
+        return timedelta(0) <= age <= timedelta(days=_CACHE_MAX_AGE_DAYS)
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
-            api_data = await self.api.async_get_stations(self.city)
-        except KurohudasApiError as err:
+            api_data = await self.api.async_get_stations()
+        except LeaApiError as err:
             raise UpdateFailed(
-                f"Nepavyko gauti Kurohudas duomenų: {err}"
+                f"Nepavyko gauti LEA degalų kainų: {err}"
             ) from err
 
-        candidates = [
-            station
-            for station in api_data.stations
-            if self.fuel_type in station.prices and self._network_allowed(station)
-        ]
-        await self._resolve_missing_coordinates(candidates)
+        await self._ensure_cache()
+        assert self._price_cache is not None
 
         today = dt_util.now().date()
+        cache_changed = False
         rows: list[dict[str, Any]] = []
 
-        for station in candidates:
-            if station.latitude is None or station.longitude is None:
+        for station in api_data.stations:
+            if self.fuel_type not in station.available_fuels:
+                continue
+            if not self._network_allowed(station):
                 continue
 
             dist = distance_km(
@@ -179,9 +163,46 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if dist > self.radius_km:
                 continue
 
-            price = station.prices[self.fuel_type]
+            cache_key = self._cache_key(station, self.fuel_type)
+            price = station.prices.get(self.fuel_type)
+            updated = station.updated.get(self.fuel_type)
+            price_from_cache = False
+
+            if price is not None:
+                self._price_cache[cache_key] = {
+                    "price": round(price, 3),
+                    "updated": updated,
+                }
+                cache_changed = True
+            else:
+                cached = self._price_cache.get(cache_key)
+                if (
+                    isinstance(cached, dict)
+                    and self._cached_price_is_fresh(
+                        str(cached.get("updated") or "")
+                    )
+                ):
+                    try:
+                        price = float(cached["price"])
+                    except (KeyError, TypeError, ValueError):
+                        price = None
+                    if price is not None:
+                        updated = str(cached.get("updated") or "")
+                        price_from_cache = True
+
+            if price is None:
+                continue
+
             station_text = " ".join(
-                filter(None, (station.network, station.name, station.address))
+                filter(
+                    None,
+                    (
+                        station.network,
+                        station.company_name,
+                        station.name,
+                        station.address,
+                    ),
+                )
             )
             active = [
                 rule
@@ -195,6 +216,7 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 {
                     "name": station.name,
                     "network": station.network,
+                    "company_name": station.company_name,
                     "address": station.address,
                     "latitude": station.latitude,
                     "longitude": station.longitude,
@@ -203,11 +225,16 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     "discount_eur_l": discount,
                     "effective_price": effective,
                     "discount_rules": [rule.source for rule in active],
-                    "price_updated": station.updated,
-                    "source": "Kurohudas.lt",
-                    "detail_url": station.detail_url,
+                    "price_updated": updated,
+                    "price_from_cache": price_from_cache,
+                    "source": "LEA",
+                    "logo_url": station.logo_url,
+                    "detail_url": LEA_SITE_URL,
                 }
             )
+
+        if cache_changed:
+            await self._price_store.async_save(self._price_cache)
 
         by_price = sorted(
             rows,
@@ -221,8 +248,7 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return {
             "data_date": api_data.data_date,
-            "source": "Kurohudas.lt",
-            "city": self.city,
+            "source": "LEA",
             "station_count": len(rows),
             "cheapest": by_price[0] if by_price else None,
             "cheapest_effective": by_effective[0] if by_effective else None,
