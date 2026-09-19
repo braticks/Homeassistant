@@ -41,8 +41,13 @@ jobs:
           out.extend(links)
 
           candidates = []
-          for src in scripts:
-              url = urllib.parse.urljoin(base, src)
+          queue = [urllib.parse.urljoin(base, src) for src in scripts]
+          seen = set()
+          while queue:
+              url = queue.pop(0)
+              if url in seen:
+                  continue
+              seen.add(url)
               try:
                   js = get(url)
               except Exception as e:
@@ -51,16 +56,18 @@ jobs:
               out.append(f"JS {url} LENGTH={len(js)}")
               patterns = [
                   r'https?://[^"\'\s)]+',
-                  r'["\']([^"\']*(?:api|json|csv|xlsx|download|export|fuel|degal)[^"\']*)["\']',
+                  r'["\']([^"\']*(?:api|json|csv|xlsx|download|export|fuel|degal|station|price|kain)[^"\']*)["\']',
               ]
               found = set()
               for pat in patterns:
                   for m in re.finditer(pat, js, re.I):
                       v = m.group(0 if m.lastindex is None else 1)
-                      if len(v) < 300:
+                      if len(v) < 400:
                           found.add(v)
               for v in sorted(found):
                   out.append("CANDIDATE " + v)
+              for rel in re.findall(r'["\'](\./[^"\']+\.js)["\']', js):
+                  queue.append(urllib.parse.urljoin(url, rel))
 
           pathlib.Path("_lea_probe.txt").write_text("\n".join(out), encoding="utf-8")
           PY
