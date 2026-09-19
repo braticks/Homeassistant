@@ -4,10 +4,11 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Pasirinkite vietą, spindulį ir kurą. Degalinių filtrus bei nuolaidas galėsite patogiai keisti per Configure po integracijos pridėjimo.",
+        "description": "Kainų šaltinis – Kurohudas.lt. Miesto puslapis apima degalines iki 12 km nuo pasirinkto miesto.",
         "data": {
-          "latitude": "Platuma",
-          "longitude": "Ilguma",
+          "city": "Miestas Kurohudas puslapyje",
+          "latitude": "Paieškos centro platuma",
+          "longitude": "Paieškos centro ilguma",
           "radius_km": "Paieškos spindulys",
           "fuel_type": "Kuro tipas",
           "update_minutes": "Atnaujinimo intervalas"
@@ -26,9 +27,11 @@
       },
       "general": {
         "title": "Bendri nustatymai",
+        "description": "Kurohudas miesto sąrašas apima iki 12 km nuo miesto, todėl maksimalus integracijos spindulys yra 12 km.",
         "data": {
-          "latitude": "Platuma",
-          "longitude": "Ilguma",
+          "city": "Miestas Kurohudas puslapyje",
+          "latitude": "Paieškos centro platuma",
+          "longitude": "Paieškos centro ilguma",
           "radius_km": "Paieškos spindulys",
           "fuel_type": "Kuro tipas",
           "update_minutes": "Atnaujinimo intervalas"
@@ -36,7 +39,7 @@
       },
       "networks": {
         "title": "Degalinių filtravimas",
-        "description": "Pažymėkite tinklus, kurių visai nenorite matyti rezultatuose.",
+        "description": "Pažymėkite tinklus, kurių visai nenorite matyti rezultatuose. Pagal nutylėjimą rodomi Circle K, Neste, Viada ir EMSI.",
         "data": {
           "excluded_networks": "Nerodyti šių degalinių tinklų"
         }
@@ -47,7 +50,7 @@
       },
       "add_discount": {
         "title": "Pridėti nuolaidą",
-        "description": "Pasirinkite degalinių tinklą, dienas ir nuolaidos dydį. Nieko ranka pagal specialų formatą rašyti nereikia.",
+        "description": "Pasirinkite degalinių tinklą, dienas ir nuolaidos dydį.",
         "data": {
           "network": "Degalinių tinklas",
           "weekdays": "Kuriomis dienomis galioja",
