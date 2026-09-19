@@ -1,5 +1,7 @@
 name: Release Tuščias bakas
 
+# Auto-create HACS releases from manifest version.
+
 on:
   push:
     branches:
