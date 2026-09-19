@@ -1,0 +1,15 @@
+?per_page=5000 STATUS=200 ROWS=2083 FIRST=2026-09-19T07:30:11.000000Z LAST=2026-09-19T04:58:15.000000Z KEYS=['data', 'meta', 'last_updated']
+META meta={'total': 2083, 'per_page': 5000, 'current_page': 1, 'last_page': 1}
+META last_updated=2026-09-19 10:30:11
+?perPage=5000 STATUS=200 ROWS=100 FIRST=2026-09-19T07:30:11.000000Z LAST=2026-09-19T07:30:11.000000Z KEYS=['data', 'meta', 'last_updated']
+META meta={'total': 2083, 'per_page': 100, 'current_page': 1, 'last_page': 21}
+META last_updated=2026-09-19 10:30:11
+?limit=5000 STATUS=200 ROWS=100 FIRST=2026-09-19T07:30:11.000000Z LAST=2026-09-19T07:30:11.000000Z KEYS=['data', 'meta', 'last_updated']
+META meta={'total': 2083, 'per_page': 100, 'current_page': 1, 'last_page': 21}
+META last_updated=2026-09-19 10:30:11
+?page=2 STATUS=200 ROWS=100 FIRST=2026-09-19T07:30:11.000000Z LAST=2026-09-19T07:30:11.000000Z KEYS=['data', 'meta', 'last_updated']
+META meta={'total': 2083, 'per_page': 100, 'current_page': 2, 'last_page': 21}
+META last_updated=2026-09-19 10:30:11
+?per_page=1000&page=1 STATUS=200 ROWS=1000 FIRST=2026-09-19T07:30:11.000000Z LAST=2026-09-19T07:30:08.000000Z KEYS=['data', 'meta', 'last_updated']
+META meta={'total': 2083, 'per_page': 1000, 'current_page': 1, 'last_page': 3}
+META last_updated=2026-09-19 10:30:11
