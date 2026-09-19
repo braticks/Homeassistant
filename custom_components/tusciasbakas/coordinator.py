@@ -25,6 +25,7 @@ from .const import (
     DEFAULT_FUEL_TYPE,
     DEFAULT_RADIUS_KM,
     DEFAULT_UPDATE_MINUTES,
+    DEFAULT_VISIBLE_NETWORK_PATTERNS,
     DOMAIN,
 )
 from .discounts import parse_discount_rules, rules_from_structured
@@ -42,6 +43,10 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.longitude = float(options.get(CONF_LONGITUDE, hass.config.longitude))
         self.radius_km = float(options.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM))
         self.fuel_type = str(options.get(CONF_FUEL_TYPE, DEFAULT_FUEL_TYPE))
+        self.has_custom_network_filter = (
+            CONF_EXCLUDED_NETWORKS in entry.options
+            or CONF_EXCLUDED_NETWORKS in entry.data
+        )
         self.excluded_networks = {
             str(value).strip().casefold()
             for value in options.get(CONF_EXCLUDED_NETWORKS, [])
@@ -87,7 +92,15 @@ class TusciasBakasCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 continue
 
             network_name = (station.network or station.name or "").strip()
-            if network_name.casefold() in self.excluded_networks:
+            network_cf = network_name.casefold()
+
+            if self.has_custom_network_filter:
+                if network_cf in self.excluded_networks:
+                    continue
+            elif not any(
+                pattern in network_cf
+                for pattern in DEFAULT_VISIBLE_NETWORK_PATTERNS
+            ):
                 continue
 
             dist = distance_km(
