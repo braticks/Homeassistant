@@ -8,6 +8,15 @@ DEFAULT_RADIUS_KM = 10.0
 DEFAULT_FUEL_TYPE = "petrol_95"
 DEFAULT_UPDATE_MINUTES = 60
 
+# First-run default: only these major networks are visible.
+DEFAULT_VISIBLE_NETWORK_PATTERNS = (
+    "circle k",
+    "circlek",
+    "neste",
+    "viada",
+    "emsi",
+)
+
 CONF_RADIUS_KM = "radius_km"
 CONF_FUEL_TYPE = "fuel_type"
 CONF_DISCOUNT_RULES = "discount_rules"
