@@ -1,0 +1,5 @@
+/read/prices/latest?date=2026-09-18 STATUS=200 LEN=942085 ROWS=2083 NONNULL=293 DATES=['2026-09-19']
+/read/prices?date=2026-09-18 STATUS=200 LEN=49623 ROWS=100 NONNULL=8 DATES=['2026-09-19']
+/read/prices/2026-09-18 ERROR=HTTP Error 404: Not Found
+/read/prices/history?date=2026-09-18 ERROR=HTTP Error 404: Not Found
+/read/prices/history ERROR=HTTP Error 404: Not Found
