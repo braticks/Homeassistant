@@ -55,7 +55,18 @@ jobs:
                   try:
                       st, body=get(url,extra)
                       out.append(f"{label}_STATUS={st}")
-                      out.append(f"{label}_BODY="+body[:12000])
+                      out.append(f"{label}_BODY="+body[:3000])
+                      if label=="AUTH":
+                          import json
+                          payload=json.loads(body)
+                          rows=payload.get("data",[])
+                          out.append("ROW_COUNT="+str(len(rows)))
+                          nonnull=[x for x in rows if x.get("price") is not None]
+                          out.append("NONNULL_COUNT="+str(len(nonnull)))
+                          out.append("NONNULL_SAMPLE="+json.dumps(nonnull[:12],ensure_ascii=False))
+                          kaunas=[x for x in nonnull if "Kauno" in str(x.get("municipality","")) or "Kaunas" in str(x.get("address",""))]
+                          out.append("KAUNAS_NONNULL_COUNT="+str(len(kaunas)))
+                          out.append("KAUNAS_SAMPLE="+json.dumps(kaunas[:30],ensure_ascii=False))
                   except Exception as e:
                       out.append(f"{label}_ERROR={e}")
 
