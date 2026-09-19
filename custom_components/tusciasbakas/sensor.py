@@ -14,18 +14,50 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import ATTRIBUTION, DOMAIN, FUEL_TYPES
 from .coordinator import TusciasBakasCoordinator
+from .logos import station_logo_url
 
 
 @dataclass(frozen=True, kw_only=True)
 class TusciasBakasSensorDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
     attrs_fn: Callable[[dict[str, Any]], dict[str, Any]]
+    station_key: str | None = None
+
+
+def _station_attrs(station: dict[str, Any] | None) -> dict[str, Any]:
+    """Flatten important station details so HA cards can use them directly."""
+    if not station:
+        return {}
+
+    return {
+        "station_name": station.get("name"),
+        "network": station.get("network"),
+        "address": station.get("address"),
+        "distance_km": station.get("distance_km"),
+        "advertised_price": station.get("price"),
+        "discount_eur_l": station.get("discount_eur_l"),
+        "effective_price": station.get("effective_price"),
+        "latitude": station.get("latitude"),
+        "longitude": station.get("longitude"),
+        "discount_rules": station.get("discount_rules", []),
+        "logo_url": station_logo_url(station),
+    }
 
 
 def _top_attrs(key: str, station_key: str):
     def inner(data: dict[str, Any]) -> dict[str, Any]:
-        return {"top_10": data.get(key, []), "station": data.get(station_key)}
+        station = data.get(station_key)
+        attrs = _station_attrs(station)
+        attrs["top_10"] = data.get(key, [])
+        return attrs
     return inner
+
+
+def _station_name(data: dict[str, Any], key: str) -> str | None:
+    station = data.get(key)
+    if not station:
+        return None
+    return station.get("network") or station.get("name")
 
 
 SENSORS = (
@@ -33,25 +65,43 @@ SENSORS = (
         key="cheapest_price",
         translation_key="cheapest_price",
         native_unit_of_measurement="€/L",
-        icon="mdi:gas-station",
         value_fn=lambda d: d["cheapest"]["price"] if d.get("cheapest") else None,
         attrs_fn=_top_attrs("top_by_price", "cheapest"),
+        station_key="cheapest",
+    ),
+    TusciasBakasSensorDescription(
+        key="cheapest_station",
+        translation_key="cheapest_station",
+        value_fn=lambda d: _station_name(d, "cheapest"),
+        attrs_fn=_top_attrs("top_by_price", "cheapest"),
+        station_key="cheapest",
     ),
     TusciasBakasSensorDescription(
         key="cheapest_effective_price",
         translation_key="cheapest_effective_price",
         native_unit_of_measurement="€/L",
-        icon="mdi:tag-minus",
-        value_fn=lambda d: d["cheapest_effective"]["effective_price"] if d.get("cheapest_effective") else None,
+        value_fn=lambda d: (
+            d["cheapest_effective"]["effective_price"]
+            if d.get("cheapest_effective")
+            else None
+        ),
         attrs_fn=_top_attrs("top_by_effective", "cheapest_effective"),
+        station_key="cheapest_effective",
+    ),
+    TusciasBakasSensorDescription(
+        key="cheapest_effective_station",
+        translation_key="cheapest_effective_station",
+        value_fn=lambda d: _station_name(d, "cheapest_effective"),
+        attrs_fn=_top_attrs("top_by_effective", "cheapest_effective"),
+        station_key="cheapest_effective",
     ),
     TusciasBakasSensorDescription(
         key="nearest_station",
         translation_key="nearest_station",
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
-        icon="mdi:map-marker-distance",
         value_fn=lambda d: d["nearest"]["distance_km"] if d.get("nearest") else None,
         attrs_fn=_top_attrs("top_by_distance", "nearest"),
+        station_key="nearest",
     ),
     TusciasBakasSensorDescription(
         key="station_count",
@@ -69,7 +119,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     coordinator: TusciasBakasCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(TusciasBakasSensor(coordinator, entry, description) for description in SENSORS)
+    async_add_entities(
+        TusciasBakasSensor(coordinator, entry, description)
+        for description in SENSORS
+    )
 
 
 class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntity):
@@ -99,11 +152,22 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
         return self.entity_description.value_fn(self.coordinator.data)
 
     @property
+    def entity_picture(self) -> str | None:
+        """Show the fuel network logo when a known station is selected."""
+        key = self.entity_description.station_key
+        if not key:
+            return None
+        return station_logo_url(self.coordinator.data.get(key))
+
+    @property
     def extra_state_attributes(self) -> dict[str, Any]:
         value = self.entity_description.attrs_fn(self.coordinator.data)
         attrs = {
             "attribution": ATTRIBUTION,
-            "fuel_type": FUEL_TYPES.get(self.coordinator.fuel_type, self.coordinator.fuel_type),
+            "fuel_type": FUEL_TYPES.get(
+                self.coordinator.fuel_type,
+                self.coordinator.fuel_type,
+            ),
             "radius_km": self.coordinator.radius_km,
             "data_date": self.coordinator.data.get("data_date"),
         }
