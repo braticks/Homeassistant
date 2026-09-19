@@ -4,19 +4,28 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Pasirinkite paieškos vietą, spindulį, kurą ir nuolaidas. Nuolaidos formatas: Degalinė;dienos;€/l, pvz. Circle K;fri;0.10",
+        "description": "Pasirinkite vietą, spindulį ir kurą. Kiekvieną nuolaidą rašykite į atskirą lauką formatu: Degalinė;dienos;€/l, pvz. Circle K;fri;0.10",
         "data": {
           "latitude": "Platuma",
           "longitude": "Ilguma",
           "radius_km": "Paieškos spindulys",
           "fuel_type": "Kuro tipas",
-          "discount_rules": "Nuolaidų taisyklės",
-          "update_minutes": "Atnaujinimo intervalas"
+          "update_minutes": "Atnaujinimo intervalas",
+          "discount_rule_1": "Nuolaida 1",
+          "discount_rule_2": "Nuolaida 2",
+          "discount_rule_3": "Nuolaida 3",
+          "discount_rule_4": "Nuolaida 4",
+          "discount_rule_5": "Nuolaida 5",
+          "discount_rule_6": "Nuolaida 6",
+          "discount_rule_7": "Nuolaida 7",
+          "discount_rule_8": "Nuolaida 8",
+          "discount_rule_9": "Nuolaida 9",
+          "discount_rule_10": "Nuolaida 10"
         }
       }
     },
     "error": {
-      "invalid_discount_rules": "Neteisingas nuolaidų formatas. Naudokite: Degalinė;dienos;nuolaida, pvz. Circle K;fri;0.10"
+      "invalid_discount_rules": "Neteisinga bent viena nuolaidos taisyklė. Naudokite: Degalinė;dienos;nuolaida, pvz. Circle K;fri;0.10"
     },
     "abort": {
       "already_configured": "Integracija jau sukonfigūruota."
@@ -26,25 +35,36 @@
     "step": {
       "init": {
         "title": "Tuščias bakas nustatymai",
-        "description": "Dienos: mon,tue,wed,thu,fri,sat,sun arba lietuviškai pir,ant,tre,ket,pen,ses,sek. 'all' – kasdien.",
+        "description": "Dienos: mon,tue,wed,thu,fri,sat,sun arba pir,ant,tre,ket,pen,ses,sek. 'all' – kasdien. Kiekviena nuolaida rašoma į atskirą lauką.",
         "data": {
           "latitude": "Platuma",
           "longitude": "Ilguma",
           "radius_km": "Paieškos spindulys",
           "fuel_type": "Kuro tipas",
-          "discount_rules": "Nuolaidų taisyklės",
-          "update_minutes": "Atnaujinimo intervalas"
+          "update_minutes": "Atnaujinimo intervalas",
+          "discount_rule_1": "Nuolaida 1",
+          "discount_rule_2": "Nuolaida 2",
+          "discount_rule_3": "Nuolaida 3",
+          "discount_rule_4": "Nuolaida 4",
+          "discount_rule_5": "Nuolaida 5",
+          "discount_rule_6": "Nuolaida 6",
+          "discount_rule_7": "Nuolaida 7",
+          "discount_rule_8": "Nuolaida 8",
+          "discount_rule_9": "Nuolaida 9",
+          "discount_rule_10": "Nuolaida 10"
         }
       }
     },
     "error": {
-      "invalid_discount_rules": "Neteisingas nuolaidų formatas. Naudokite: Degalinė;dienos;nuolaida."
+      "invalid_discount_rules": "Neteisinga bent viena nuolaidos taisyklė."
     }
   },
   "entity": {
     "sensor": {
       "cheapest_price": {"name": "Pigiausia skelbiama kaina"},
+      "cheapest_station": {"name": "Pigiausia degalinė"},
       "cheapest_effective_price": {"name": "Pigiausia kaina su nuolaidomis"},
+      "cheapest_effective_station": {"name": "Pigiausia degalinė su nuolaida"},
       "nearest_station": {"name": "Artimiausia degalinė"},
       "station_count": {"name": "Degalinių spindulyje"}
     }
