@@ -58,7 +58,7 @@ KNOWN_NETWORKS = (
 )
 
 _UPDATED_RE = re.compile(
-    r"(Šiandien|Vakar|Užvakar|\d{4}-\d{2}-\d{2})\s*$",
+    r"(Šiandien|Vakar|Užvakar|\d{4}-\d{2}-\d{2})",
     re.IGNORECASE,
 )
 _DATE_RE = re.compile(r"Kainų data\s*[—-]\s*(\d{4}-\d{2}-\d{2})")
@@ -66,10 +66,13 @@ _COORD_RE = re.compile(
     r"destination=([-+]?\d+(?:\.\d+)?)%2C([-+]?\d+(?:\.\d+)?)",
     re.IGNORECASE,
 )
+_PRICE_OR_DASH_RE = re.compile(
+    r"(?<![\d.,])(\d{1,2}[,.]\d{3}|(?<!\S)[-—](?=\s|$))(?![\d.,])"
+)
 
 
 class _FuelTableParser(HTMLParser):
-    """Extract station table rows from Kurohudas HTML."""
+    """Parse classic HTML table layout if Kurohudas uses one."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -88,7 +91,7 @@ class _FuelTableParser(HTMLParser):
         elif self.in_tr and tag in {"td", "th"}:
             self.in_cell = True
             self.current_cell_parts = []
-        elif self.in_tr and self.in_cell and tag == "a" and self.current_href is None:
+        elif self.in_tr and tag == "a" and self.current_href is None:
             href = dict(attrs).get("href")
             if href and "/degalines/" in href:
                 self.current_href = href
@@ -110,6 +113,57 @@ class _FuelTableParser(HTMLParser):
             self.current_cell_parts.append(data)
 
 
+class _StationStreamParser(HTMLParser):
+    """Parse station links and following prices independent of page layout."""
+
+    def __init__(self) -> None:
+        super().__init__(convert_charrefs=True)
+        self._current_href: str | None = None
+        self._anchor_parts: list[str] = []
+        self._context_parts: list[str] = []
+        self._in_station_anchor = False
+        self.records: list[tuple[str, str, str]] = []
+
+    def _flush(self) -> None:
+        if not self._current_href:
+            return
+        anchor = " ".join(" ".join(self._anchor_parts).split())
+        context = " ".join(" ".join(self._context_parts).split())
+        if anchor:
+            self.records.append((anchor, context, self._current_href))
+        self._current_href = None
+        self._anchor_parts = []
+        self._context_parts = []
+        self._in_station_anchor = False
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag != "a":
+            return
+        href = dict(attrs).get("href")
+        if href and "/degalines/" in href:
+            self._flush()
+            self._current_href = href
+            self._in_station_anchor = True
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "a" and self._in_station_anchor:
+            self._in_station_anchor = False
+
+    def handle_data(self, data: str) -> None:
+        if not self._current_href:
+            return
+        text = " ".join(data.split())
+        if not text:
+            return
+        self._context_parts.append(text)
+        if self._in_station_anchor:
+            self._anchor_parts.append(text)
+
+    def close(self) -> None:
+        super().close()
+        self._flush()
+
+
 def _price(value: str) -> float | None:
     text = value.strip().replace(",", ".")
     if text in {"", "-", "—"}:
@@ -125,7 +179,8 @@ def _strip_updated(text: str) -> tuple[str, str | None]:
     match = _UPDATED_RE.search(text)
     if not match:
         return text.strip(), None
-    return text[: match.start()].strip(" ,"), match.group(1)
+    clean = (text[: match.start()] + " " + text[match.end():]).strip(" ,")
+    return " ".join(clean.split()), match.group(1)
 
 
 def _network_and_address(text: str) -> tuple[str, str]:
@@ -140,46 +195,98 @@ def _network_and_address(text: str) -> tuple[str, str]:
     return first or "Degalinė", rest.strip()
 
 
-def parse_city_page(html: str) -> ApiData:
-    """Parse the Kurohudas city table."""
-    parser = _FuelTableParser()
-    parser.feed(html)
+def _station_from_values(
+    station_text: str,
+    updated: str | None,
+    href: str,
+    values: list[str],
+) -> Station | None:
+    if len(values) < 4:
+        return None
 
+    network, address = _network_and_address(station_text)
+    prices: dict[str, float] = {}
+    mapped = {
+        "diesel": _price(values[0]),
+        "petrol_95": _price(values[1]),
+        "petrol_98": _price(values[2]),
+        "lpg": _price(values[3]),
+    }
+    for fuel, value in mapped.items():
+        if value is not None:
+            prices[fuel] = value
+
+    if not prices:
+        return None
+
+    return Station(
+        name=station_text,
+        network=network,
+        address=address,
+        prices=prices,
+        detail_url=urljoin(KUROHUDAS_BASE_URL, href),
+        updated=updated,
+    )
+
+
+def parse_city_page(html: str) -> ApiData:
+    """Parse Kurohudas city prices using table and layout-independent fallbacks."""
     data_date_match = _DATE_RE.search(html)
     data_date = data_date_match.group(1) if data_date_match else None
-
     stations: list[Station] = []
-    for cells, href in parser.rows:
+
+    table_parser = _FuelTableParser()
+    table_parser.feed(html)
+    table_parser.close()
+
+    for cells, href in table_parser.rows:
         if not href or len(cells) < 5:
             continue
-
         station_text, updated = _strip_updated(cells[0])
-        network, address = _network_and_address(station_text)
-
-        prices: dict[str, float] = {}
-        values = {
-            "diesel": _price(cells[1]),
-            "petrol_95": _price(cells[2]),
-            "petrol_98": _price(cells[3]),
-            "lpg": _price(cells[4]),
-        }
-        for fuel, value in values.items():
-            if value is not None:
-                prices[fuel] = value
-
-        stations.append(
-            Station(
-                name=station_text,
-                network=network,
-                address=address,
-                prices=prices,
-                detail_url=urljoin(KUROHUDAS_BASE_URL, href),
-                updated=updated,
-            )
+        station = _station_from_values(
+            station_text,
+            updated,
+            href,
+            cells[1:5],
         )
+        if station is not None:
+            stations.append(station)
 
     if not stations:
-        raise KurohudasApiError("Kurohudas puslapyje nerasta degalinių lentelė")
+        stream_parser = _StationStreamParser()
+        stream_parser.feed(html)
+        stream_parser.close()
+
+        for anchor_text, context, href in stream_parser.records:
+            station_text, anchor_updated = _strip_updated(anchor_text)
+            context_updated = _UPDATED_RE.search(context)
+            updated = (
+                anchor_updated
+                or (context_updated.group(1) if context_updated else None)
+            )
+            values = [
+                match.group(1)
+                for match in _PRICE_OR_DASH_RE.finditer(context)
+            ][:4]
+            station = _station_from_values(
+                station_text,
+                updated,
+                href,
+                values,
+            )
+            if station is not None:
+                stations.append(station)
+
+    # De-duplicate in case the page contains the same station link more than once.
+    unique: dict[str, Station] = {}
+    for station in stations:
+        unique[station.detail_url] = station
+    stations = list(unique.values())
+
+    if not stations:
+        raise KurohudasApiError(
+            "Kurohudas puslapyje nerastos degalinių kainos"
+        )
 
     return ApiData(stations=stations, data_date=data_date)
 
@@ -214,8 +321,14 @@ class KurohudasApi:
     def __init__(self, session: ClientSession) -> None:
         self._session = session
         self._headers = {
-            "User-Agent": "HomeAssistant TuščiasBakas integration/0.3",
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/153.0 Safari/537.36"
+            ),
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "lt-LT,lt;q=0.9,en;q=0.7",
+            "Cache-Control": "no-cache",
         }
 
     async def _get_text(self, url: str) -> str:
@@ -227,7 +340,12 @@ class KurohudasApi:
             ) as response:
                 if response.status != 200:
                     raise KurohudasApiError(f"HTTP {response.status}: {url}")
-                return await response.text()
+                text = await response.text()
+                if len(text) < 500:
+                    raise KurohudasApiError(
+                        f"Kurohudas grąžino per trumpą puslapį ({len(text)} B)"
+                    )
+                return text
         except (ClientError, TimeoutError) as err:
             raise KurohudasApiError(str(err)) from err
 
