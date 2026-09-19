@@ -1,0 +1,150 @@
+HTML_LENGTH=2246
+SCRIPTS:
+/TSbd/081b474992ab2000b9e221bbd7aa5966f5d7042fb7c17a9b3c5bec15c2cab3e59141ebc9ed672424?type=2
+./assets/index-DJ-BlfNT.js
+https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js
+https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495
+LINKS:
+https://fonts.googleapis.com
+https://fonts.gstatic.com
+https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap
+./assets/index-QzSQSHQU.css
+JS https://degalukainos.ena.lt/TSbd/081b474992ab2000b9e221bbd7aa5966f5d7042fb7c17a9b3c5bec15c2cab3e59141ebc9ed672424?type=2 LENGTH=55985
+JS https://degalukainos.ena.lt/assets/index-DJ-BlfNT.js LENGTH=217334
+CANDIDATE #fuel-price-site-app
+CANDIDATE )?i.default:i}var Fi={exports:{}};/* @preserve
+ * Leaflet 1.9.4, a JS library for interactive maps. https://leafletjs.com
+ * (c) 2010-2023 Vladimir Agafonkin, (c) 2010-2011 CloudMade
+ */var mu=Fi.exports,fr;function gu(){return fr||(fr=1,(function(i,s){(function(o,l){l(s)})(mu,(function(o){var l=
+CANDIDATE ,coordinates:bs(this.getLatLng(),t)})}};mn.include(Ps),ws.include(Ps),gn.include(Ps),Ee.include({toGeoJSON:function(t){var e=!te(this._latlngs),n=wn(this._latlngs,e?1:0,!1,t);return di(this,{type:(e?
+CANDIDATE ,coordinates:e})},toGeoJSON:function(t){var e=this.feature&&this.feature.geometry&&this.feature.geometry.type;if(e===
+CANDIDATE ,coordinates:n})}}),fi.include({toGeoJSON:function(t){var e=!te(this._latlngs),n=e&&!te(this._latlngs[0]),r=wn(this._latlngs,n?2:e?1:0,!0,t);return e||(r=[r]),di(this,{type:(n?
+CANDIDATE ,coordinates:r})}}),hi.include({toMultiPoint:function(t){var e=[];return this.eachLayer(function(n){e.push(n.toGeoJSON(t).geometry.coordinates)}),di(this,{type:
+CANDIDATE ,properties:{},geometry:t}}var Ps={toGeoJSON:function(t){return di(this,{type:
+CANDIDATE ,r=[];return this.eachLayer(function(a){if(a.toGeoJSON){var c=a.toGeoJSON(t);if(n)r.push(c.geometry);else{var m=xn(c);m.type===
+CANDIDATE ./FuelPriceSiteApp-Au1nMGjM.css
+CANDIDATE ./FuelPriceSiteApp-D7c-syZH.js
+CANDIDATE :q(i)||dt(i)&&(i.toString===qr||!$(i.toString))?Xr(i)?Au(i.value):JSON.stringify(i,Qr,2):String(i),Qr=(i,s)=>Xr(s)?Qr(i,s.value):yi(s)?{[`Map(${s.size})`]:[...s.entries()].reduce((o,[l,u],h)=>(o[Ss(l,h)+
+CANDIDATE Invalid GeoJSON object.
+CANDIDATE http://www.w3.org/1998/Math/MathML
+CANDIDATE http://www.w3.org/1999/xlink
+CANDIDATE http://www.w3.org/2000/svg
+CANDIDATE https://leafletjs.com
+CANDIDATE https://vuejs.org/error-reference/#runtime-${o}`;for(;d;
+JS https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js LENGTH=639123
+CANDIDATE &&!Array.isArray(e))return JSON.parse(JSON.stringify(e));if(typeof e!=
+CANDIDATE &&module.exports&&typeof DO_NOT_EXPORT_CODEPAGE===
+CANDIDATE &&module.exports)make_xlsx_lib(module.exports);else if(typeof define===
+CANDIDATE &&typeof(chrome.downloads||{}).download==
+CANDIDATE );if(s.download!=null){s.download=e;s.href=i;document.body.appendChild(s);s.click();document.body.removeChild(s);if(URL.revokeObjectURL&&typeof setTimeout!==
+CANDIDATE );xc(t[0],a,r);a.raw=e;return a}function Ic(e,r){if(r&&r.themeXLSX)return r.themeXLSX;if(e&&typeof e.raw==
+CANDIDATE )JSON.stringify(c);d.push(c.name);u[c.name]=v;G=false}else if(p[0].charAt(p[0].length-2)!==
+CANDIDATE )e.parse_xlscfb=vm;e.parse_zip=Xb;e.read=iw;e.readFile=sw;e.readFileSync=sw;e.write=gw;e.writeFile=bw;e.writeFileSync=bw;e.writeFileAsync=kw;e.utils=Ww;e.writeXLSX=pw;e.writeFileXLSX=ww;e.SSF=Ve;if(typeof Xw!==
+CANDIDATE )make_xlsx_lib(exports);else if(typeof module!==
+CANDIDATE )module.exports=cptable;(function(e,r){
+CANDIDATE )module.exports=r(t);else e.cptable=r(t)}else throw new Error(
+CANDIDATE )setTimeout(function(){URL.revokeObjectURL(i)},6e4);return chrome.downloads.download({url:i,filename:e,saveAs:true})}var s=document.createElement(
+CANDIDATE ){var $w=undefined;if(($w||{}).Readable)zw($w.Readable)}}if(typeof exports!==
+CANDIDATE )};var D=function Y(t){return!!(e[t]||r[t])};e.utils={decode:N,encode:I,hascp:D,magic:r,cache:S};return e});var XLSX={};function make_xlsx_lib(e){e.version=
+CANDIDATE )}function br(e){if(typeof JSON!=
+CANDIDATE /><title>SheetJS Table Export</title></head><body>
+CANDIDATE ]||c.name;if(typeof JSON!==
+CANDIDATE csv
+CANDIDATE downloadcomponents
+CANDIDATE http://docs.oasis-open.org/ns/office/1.2/meta/
+CANDIDATE http://docs.oasis-open.org/ns/office/1.2/meta/pkg#
+CANDIDATE http://macVmlSchemaUri
+CANDIDATE http://openoffice.org/2004/calc
+CANDIDATE http://openoffice.org/2004/office
+CANDIDATE http://openoffice.org/2004/writer
+CANDIDATE http://openoffice.org/2005/report
+CANDIDATE http://openoffice.org/2009/table
+CANDIDATE http://openoffice.org/2010/draw
+CANDIDATE http://purl.oclc.org/ooxml/officeDocument/relationships/worksheet
+CANDIDATE http://purl.oclc.org/ooxml/spreadsheetml/main
+CANDIDATE http://purl.org/dc/dcmitype/
+CANDIDATE http://purl.org/dc/elements/1.1/
+CANDIDATE http://purl.org/dc/terms/
+CANDIDATE http://schemas.microsoft.com/office/2006/relationships/vbaProject
+CANDIDATE http://schemas.microsoft.com/office/2006/relationships/xlExternalLinkPath/xlPathMissing
+CANDIDATE http://schemas.microsoft.com/office/2006/relationships/xlMacrosheet
+CANDIDATE http://schemas.microsoft.com/office/2014/relationships/chartEx
+CANDIDATE http://schemas.microsoft.com/office/2017/10/relationships/person
+CANDIDATE http://schemas.microsoft.com/office/2017/10/relationships/threadedComment
+CANDIDATE http://schemas.microsoft.com/office/excel/2006/2
+CANDIDATE http://schemas.microsoft.com/office/excel/2006/main
+CANDIDATE http://schemas.microsoft.com/office/mac/excel/2008/main
+CANDIDATE http://schemas.microsoft.com/office/spreadsheetml/2017/dynamicarray
+CANDIDATE http://schemas.microsoft.com/office/spreadsheetml/2017/richdata
+CANDIDATE http://schemas.microsoft.com/office/spreadsheetml/2018/threadedcomments
+CANDIDATE http://schemas.openxmlformats.org/drawingml/2006/main
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/custom-properties
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/extended-properties
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/chart
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/chartsheet
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/custom-properties
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXml
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/customXmlProps
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/dialogsheet
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLink
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/externalLinkPath
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/image
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/sheetMetadata
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing
+CANDIDATE http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet
+CANDIDATE http://schemas.openxmlformats.org/package/2006/content-types
+CANDIDATE http://schemas.openxmlformats.org/package/2006/metadata/core-properties
+CANDIDATE http://schemas.openxmlformats.org/package/2006/relationships
+CANDIDATE http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties
+CANDIDATE http://schemas.openxmlformats.org/package/2006/sheetjs/core-properties
+CANDIDATE http://schemas.openxmlformats.org/spreadsheetml/2006/main
+CANDIDATE http://sheetjs.com
+CANDIDATE http://sheetjs.openxmlformats.org/officeDocument/2006/relationships/officeDocument
+CANDIDATE http://www.w3.org/1998/Math/MathML
+CANDIDATE http://www.w3.org/1999/02/22-rdf-syntax-ns#
+CANDIDATE http://www.w3.org/1999/xhtml
+CANDIDATE http://www.w3.org/1999/xlink
+CANDIDATE http://www.w3.org/2001/XMLSchema
+CANDIDATE http://www.w3.org/2001/XMLSchema-instance
+CANDIDATE http://www.w3.org/2001/xml-events
+CANDIDATE http://www.w3.org/2002/xforms
+CANDIDATE http://www.w3.org/2003/g/data-view#
+CANDIDATE http://www.w3.org/TR/REC-html40
+CANDIDATE http://www.w3.org/TR/css3-text/
+CANDIDATE mapinfo
+CANDIDATE xlsx
+CANDIDATE },charts:{xlsx:
+CANDIDATE },comments:{xlsx:
+CANDIDATE },dialogs:{xlsx:
+CANDIDATE },macros:{xlsx:
+CANDIDATE },metadata:{xlsx:
+CANDIDATE },sheets:{xlsx:
+CANDIDATE },strs:{xlsx:
+CANDIDATE },styles:{xlsx:
+CANDIDATE };var $n={workbooks:{xlsx:
+JS https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495 LENGTH=30294
+CANDIDATE !=typeof e.destination.sameDocument||e.destination.sameDocument?(j(),m=null!==(i=null===(n=null==e?void 0:e.destination)||void 0===n?void 0:n.url)&&void 0!==i?i:m,p(m,{navigationType:t.NavigationType.RoutingApis}),D(m)):A=!0)};return window.navigation.addEventListener(
+CANDIDATE ,buffered:!0})}catch(t){return null}return i}()),T||y!==t.SpaMonitoringType.HistoryAndNavigationAPI&&y!==t.SpaMonitoringType.SoftNavigationHeuristics||(S=function(){if(!(
+CANDIDATE ,e),e}(),S||(_=window.history,(H=_.pushState)&&(_.pushState=function(e,i,o){const r=n(o);return m!=r&&(R(m),j(),p(r,{navigationType:t.NavigationType.RoutingApis}),D(r),m=r),H.apply(_,[e,i,o])},window.addEventListener(
+CANDIDATE ,t.RoutingApis=
+CANDIDATE ,t[t.HistoryAndNavigationAPI=1]=
+CANDIDATE ,{value:function(t){const e=Math.trunc(t)||0,n=e>=0?e:this.length+e;if(!(n<0||n>=this.length))return this[n]},writable:!0,configurable:!0,enumerable:!1})}},e={};function n(i){var o=e[i];if(void 0!==o)return o.exports;var r=e[i]={exports:{}};return t[i].call(r.exports,r,r.exports,n),r.exports}(()=>{
+CANDIDATE ===e?`${o.origin}${o.pathname}`:void 0,name:n,dur:a,desc:r})}catch(t){}}}return t}function z(e,i){const o=K(u),r=o===t.NavigationType.RoutingApis||o===t.NavigationType.SoftNavigation,s={startTime:U(u),pageloadId:u,n:g>1?g:void 0,eventType:e,nt:o,location:(0,a.cleanLocation)(i||n())||
+CANDIDATE ===n||!0===n?t.SpaMonitoringType.HistoryAndNavigationAPI:
+CANDIDATE ===v.load)return;if(l){const t=l.getAttribute(c);if(t)try{v=Object.assign(Object.assign({},v),JSON.parse(t))}catch(t){}else{const t=l.getAttribute(
+CANDIDATE ==typeof n&&n>=t.SpaMonitoringType.None&&n<=t.SpaMonitoringType.SoftNavigationHeuristics?n:t.SpaMonitoringType.HistoryAndNavigationAPI)}(v.spa),h=y!==t.SpaMonitoringType.None;let T=null,S=null;const b=v.send&&v.send.to?v.send.to:void 0===v.version?
+CANDIDATE ==typeof navigator.sendBeacon&&s&&o){e.st=i.SendType.SendBeacon;const t=JSON.stringify(e),n={type:
+CANDIDATE application/json
+CANDIDATE https://cloudflareinsights.com/cdn-cgi/rum
+CANDIDATE },bi:(c=C,c.bv||c.ov||c.be||c.bev?C:void 0)};var c;return S&&s.nt===t.NavigationType.RoutingApis&&(s.ntapi=1),s}function J(t){var e;if(
+CANDIDATE },o=navigator.sendBeacon&&navigator.sendBeacon.bind(navigator);null==o||o(a,new Blob([t],n))}else{e.st=i.SendType.XHR;const t=JSON.stringify(e),o=new XMLHttpRequest;n&&(o.onreadystatechange=function(){4==this.readyState&&204==this.status&&n()}),o.open(
