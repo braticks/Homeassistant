@@ -1,0 +1,27 @@
+name: Check Tuščias bakas
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "custom_components/tusciasbakas/**"
+      - ".github/workflows/check-tusciasbakas.yml"
+  pull_request:
+    paths:
+      - "custom_components/tusciasbakas/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check Python syntax
+        run: python3 -m compileall -q custom_components/tusciasbakas
+
+      - name: Check JSON
+        run: |
+          python3 -m json.tool custom_components/tusciasbakas/manifest.json >/dev/null
+          python3 -m json.tool custom_components/tusciasbakas/translations/lt.json >/dev/null
+          python3 -m json.tool custom_components/tusciasbakas/translations/en.json >/dev/null
+          python3 -m json.tool hacs.json >/dev/null
