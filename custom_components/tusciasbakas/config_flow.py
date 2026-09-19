@@ -19,9 +19,8 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .api import KurohudasApi, KurohudasApiError
+from .api import LeaApiError, LeaFuelApi
 from .const import (
-    CONF_CITY,
     CONF_DISCOUNT_RULES,
     CONF_DISCOUNTS,
     CONF_EXCLUDED_NETWORKS,
@@ -30,13 +29,13 @@ from .const import (
     CONF_LONGITUDE,
     CONF_RADIUS_KM,
     CONF_UPDATE_MINUTES,
-    DEFAULT_CITY,
     DEFAULT_FUEL_TYPE,
     DEFAULT_RADIUS_KM,
     DEFAULT_UPDATE_MINUTES,
     DEFAULT_VISIBLE_NETWORK_PATTERNS,
     DOMAIN,
     FUEL_TYPES,
+    MAX_RADIUS_KM,
 )
 from .discounts import structured_from_legacy, structured_rule_label
 
@@ -52,6 +51,7 @@ FALLBACK_NETWORKS = [
     "Stateta",
     "Skulas",
     "Alauša",
+    "Regusa",
     "Boost Petrol",
 ]
 
@@ -70,10 +70,6 @@ def _general_schema(defaults: dict[str, Any]) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(
-                CONF_CITY,
-                default=str(defaults.get(CONF_CITY, DEFAULT_CITY)),
-            ): str,
-            vol.Required(
                 CONF_LATITUDE,
                 default=float(defaults.get(CONF_LATITUDE, 0)),
             ): vol.All(vol.Coerce(float), vol.Range(min=-90, max=90)),
@@ -84,33 +80,38 @@ def _general_schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(
                 CONF_RADIUS_KM,
                 default=min(
-                    12.0,
+                    MAX_RADIUS_KM,
                     float(defaults.get(CONF_RADIUS_KM, DEFAULT_RADIUS_KM)),
                 ),
-            ): vol.All(vol.Coerce(float), vol.Range(min=1, max=12)),
+            ): vol.All(
+                vol.Coerce(float),
+                vol.Range(min=1, max=MAX_RADIUS_KM),
+            ),
             vol.Required(
                 CONF_FUEL_TYPE,
                 default=str(defaults.get(CONF_FUEL_TYPE, DEFAULT_FUEL_TYPE)),
             ): vol.In(FUEL_TYPES),
             vol.Required(
                 CONF_UPDATE_MINUTES,
-                default=int(defaults.get(CONF_UPDATE_MINUTES, DEFAULT_UPDATE_MINUTES)),
+                default=int(
+                    defaults.get(CONF_UPDATE_MINUTES, DEFAULT_UPDATE_MINUTES)
+                ),
             ): vol.All(vol.Coerce(int), vol.Range(min=15, max=360)),
         }
     )
 
 
-async def _async_network_names(hass, city: str) -> list[str]:
-    api = KurohudasApi(async_get_clientsession(hass))
+async def _async_network_names(hass) -> list[str]:
+    api = LeaFuelApi(async_get_clientsession(hass))
     try:
-        data = await api.async_get_stations(city)
-    except KurohudasApiError:
+        data = await api.async_get_stations()
+    except LeaApiError:
         return FALLBACK_NETWORKS
 
     names = {
-        (station.network or station.name or "").strip()
+        station.network.strip()
         for station in data.stations
-        if (station.network or station.name or "").strip()
+        if station.network.strip()
     }
     if not names:
         return FALLBACK_NETWORKS
@@ -130,7 +131,6 @@ class TusciasBakasConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         defaults = {
-            CONF_CITY: DEFAULT_CITY,
             CONF_LATITUDE: self.hass.config.latitude,
             CONF_LONGITUDE: self.hass.config.longitude,
             CONF_RADIUS_KM: DEFAULT_RADIUS_KM,
@@ -200,8 +200,7 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
             excluded = list(user_input.get(CONF_EXCLUDED_NETWORKS, []))
             return self._save({CONF_EXCLUDED_NETWORKS: excluded})
 
-        city = str(current.get(CONF_CITY, DEFAULT_CITY)).strip() or DEFAULT_CITY
-        networks = await _async_network_names(self.hass, city)
+        networks = await _async_network_names(self.hass)
 
         if CONF_EXCLUDED_NETWORKS in current:
             selected = list(current.get(CONF_EXCLUDED_NETWORKS, []))
@@ -270,9 +269,7 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
             )
             return await self.async_step_discounts()
 
-        current = self._current()
-        city = str(current.get(CONF_CITY, DEFAULT_CITY)).strip() or DEFAULT_CITY
-        networks = await _async_network_names(self.hass, city)
+        networks = await _async_network_names(self.hass)
 
         return self.async_show_form(
             step_id="add_discount",
