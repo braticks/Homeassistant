@@ -108,7 +108,7 @@ async def _async_network_names(hass) -> list[str]:
 class TusciasBakasConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle initial configuration."""
 
-    VERSION = 2
+    VERSION = 1
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
         """Set up the integration."""
