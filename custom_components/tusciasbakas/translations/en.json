@@ -4,9 +4,8 @@
     "step": {
       "user": {
         "title": "Tuščias bakas",
-        "description": "Price source: Kurohudas.lt. A Kurohudas city page covers stations within 12 km of the selected city.",
+        "description": "Data comes from the official Lithuanian Energy Agency (LEA) fuel-price source. On working days prices are reported for 10:00, while some stations update more frequently. Loyalty discounts are not included in LEA prices.",
         "data": {
-          "city": "City on Kurohudas",
           "latitude": "Search center latitude",
           "longitude": "Search center longitude",
           "radius_km": "Search radius",
@@ -27,9 +26,8 @@
       },
       "general": {
         "title": "General settings",
-        "description": "Kurohudas city lists cover up to 12 km around a city, so the integration radius is limited to 12 km.",
+        "description": "Choose the search center, radius, fuel type and update interval.",
         "data": {
-          "city": "City on Kurohudas",
           "latitude": "Search center latitude",
           "longitude": "Search center longitude",
           "radius_km": "Search radius",
@@ -50,7 +48,7 @@
       },
       "add_discount": {
         "title": "Add discount",
-        "description": "Choose a fuel network, weekdays and discount amount.",
+        "description": "Choose a fuel network, weekdays and discount amount. It is subtracted from the LEA advertised price.",
         "data": {
           "network": "Fuel network",
           "weekdays": "Valid weekdays",
