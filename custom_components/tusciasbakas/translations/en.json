@@ -1,0 +1,52 @@
+{
+  "title": "Tuščias bakas",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tuščias bakas",
+        "description": "Choose search location, radius, fuel type and discounts. Discount format: Station;days;EUR/l, e.g. Circle K;fri;0.10",
+        "data": {
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "radius_km": "Search radius",
+          "fuel_type": "Fuel type",
+          "discount_rules": "Discount rules",
+          "update_minutes": "Update interval"
+        }
+      }
+    },
+    "error": {
+      "invalid_discount_rules": "Invalid discount format. Use Station;days;discount, e.g. Circle K;fri;0.10"
+    },
+    "abort": {
+      "already_configured": "The integration is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tuščias bakas settings",
+        "description": "Days: mon,tue,wed,thu,fri,sat,sun. Use 'all' for every day.",
+        "data": {
+          "latitude": "Latitude",
+          "longitude": "Longitude",
+          "radius_km": "Search radius",
+          "fuel_type": "Fuel type",
+          "discount_rules": "Discount rules",
+          "update_minutes": "Update interval"
+        }
+      }
+    },
+    "error": {
+      "invalid_discount_rules": "Invalid discount format. Use Station;days;discount."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cheapest_price": {"name": "Cheapest advertised price"},
+      "cheapest_effective_price": {"name": "Cheapest price after discounts"},
+      "nearest_station": {"name": "Nearest station"},
+      "station_count": {"name": "Stations in radius"}
+    }
+  }
+}
