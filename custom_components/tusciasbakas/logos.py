@@ -15,6 +15,7 @@ NETWORK_DOMAINS = {
     "balticpetroleum": "balticpetroleum.lt",
     "jozita": "jozita.lt",
     "emsi": "emsi.lt",
+    "saurida": "saurida.lt",
 }
 
 def station_logo_url(station: dict[str, Any] | None) -> str | None:
