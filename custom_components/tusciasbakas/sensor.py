@@ -25,7 +25,6 @@ class TusciasBakasSensorDescription(SensorEntityDescription):
 
 
 def _station_attrs(station: dict[str, Any] | None) -> dict[str, Any]:
-    """Flatten important station details so HA cards can use them directly."""
     if not station:
         return {}
 
@@ -53,11 +52,16 @@ def _top_attrs(key: str, station_key: str):
     return inner
 
 
-def _station_name(data: dict[str, Any], key: str) -> str | None:
+def _station_display(data: dict[str, Any], key: str) -> str | None:
     station = data.get(key)
     if not station:
         return None
-    return station.get("network") or station.get("name")
+
+    network = str(station.get("network") or station.get("name") or "Degalinė").strip()
+    address = str(station.get("address") or "").strip()
+    if address:
+        return f"{network} — {address}"
+    return network
 
 
 SENSORS = (
@@ -65,6 +69,7 @@ SENSORS = (
         key="cheapest_price",
         translation_key="cheapest_price",
         native_unit_of_measurement="€/L",
+        icon="mdi:currency-eur",
         value_fn=lambda d: d["cheapest"]["price"] if d.get("cheapest") else None,
         attrs_fn=_top_attrs("top_by_price", "cheapest"),
         station_key="cheapest",
@@ -72,7 +77,8 @@ SENSORS = (
     TusciasBakasSensorDescription(
         key="cheapest_station",
         translation_key="cheapest_station",
-        value_fn=lambda d: _station_name(d, "cheapest"),
+        icon="mdi:gas-station",
+        value_fn=lambda d: _station_display(d, "cheapest"),
         attrs_fn=_top_attrs("top_by_price", "cheapest"),
         station_key="cheapest",
     ),
@@ -80,6 +86,7 @@ SENSORS = (
         key="cheapest_effective_price",
         translation_key="cheapest_effective_price",
         native_unit_of_measurement="€/L",
+        icon="mdi:tag-minus",
         value_fn=lambda d: (
             d["cheapest_effective"]["effective_price"]
             if d.get("cheapest_effective")
@@ -91,14 +98,24 @@ SENSORS = (
     TusciasBakasSensorDescription(
         key="cheapest_effective_station",
         translation_key="cheapest_effective_station",
-        value_fn=lambda d: _station_name(d, "cheapest_effective"),
+        icon="mdi:gas-station-outline",
+        value_fn=lambda d: _station_display(d, "cheapest_effective"),
         attrs_fn=_top_attrs("top_by_effective", "cheapest_effective"),
         station_key="cheapest_effective",
     ),
     TusciasBakasSensorDescription(
         key="nearest_station",
         translation_key="nearest_station",
+        icon="mdi:map-marker",
+        value_fn=lambda d: _station_display(d, "nearest"),
+        attrs_fn=_top_attrs("top_by_distance", "nearest"),
+        station_key="nearest",
+    ),
+    TusciasBakasSensorDescription(
+        key="nearest_distance",
+        translation_key="nearest_distance",
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        icon="mdi:map-marker-distance",
         value_fn=lambda d: d["nearest"]["distance_km"] if d.get("nearest") else None,
         attrs_fn=_top_attrs("top_by_distance", "nearest"),
         station_key="nearest",
@@ -153,7 +170,6 @@ class TusciasBakasSensor(CoordinatorEntity[TusciasBakasCoordinator], SensorEntit
 
     @property
     def entity_picture(self) -> str | None:
-        """Show the fuel network logo when a known station is selected."""
         key = self.entity_description.station_key
         if not key:
             return None
