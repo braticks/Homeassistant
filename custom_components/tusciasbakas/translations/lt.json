@@ -1,0 +1,52 @@
+{
+  "title": "Tuščias bakas",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Tuščias bakas",
+        "description": "Pasirinkite paieškos vietą, spindulį, kurą ir nuolaidas. Nuolaidos formatas: Degalinė;dienos;€/l, pvz. Circle K;fri;0.10",
+        "data": {
+          "latitude": "Platuma",
+          "longitude": "Ilguma",
+          "radius_km": "Paieškos spindulys",
+          "fuel_type": "Kuro tipas",
+          "discount_rules": "Nuolaidų taisyklės",
+          "update_minutes": "Atnaujinimo intervalas"
+        }
+      }
+    },
+    "error": {
+      "invalid_discount_rules": "Neteisingas nuolaidų formatas. Naudokite: Degalinė;dienos;nuolaida, pvz. Circle K;fri;0.10"
+    },
+    "abort": {
+      "already_configured": "Integracija jau sukonfigūruota."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tuščias bakas nustatymai",
+        "description": "Dienos: mon,tue,wed,thu,fri,sat,sun arba lietuviškai pir,ant,tre,ket,pen,ses,sek. 'all' – kasdien.",
+        "data": {
+          "latitude": "Platuma",
+          "longitude": "Ilguma",
+          "radius_km": "Paieškos spindulys",
+          "fuel_type": "Kuro tipas",
+          "discount_rules": "Nuolaidų taisyklės",
+          "update_minutes": "Atnaujinimo intervalas"
+        }
+      }
+    },
+    "error": {
+      "invalid_discount_rules": "Neteisingas nuolaidų formatas. Naudokite: Degalinė;dienos;nuolaida."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cheapest_price": {"name": "Pigiausia skelbiama kaina"},
+      "cheapest_effective_price": {"name": "Pigiausia kaina su nuolaidomis"},
+      "nearest_station": {"name": "Artimiausia degalinė"},
+      "station_count": {"name": "Degalinių spindulyje"}
+    }
+  }
+}
