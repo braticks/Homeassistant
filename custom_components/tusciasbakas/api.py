@@ -1,334 +1,86 @@
-"""Kurohudas.lt client for Tuščias bakas."""
+"""Official LEA fuel price API client."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from html.parser import HTMLParser
+from dataclasses import dataclass, field
 import re
-from urllib.parse import parse_qs, quote, unquote, urljoin, urlparse
+from urllib.parse import urljoin
 
 from aiohttp import ClientError, ClientSession
 
-from .const import KUROHUDAS_BASE_URL
+from .const import LEA_SITE_URL
 
 
-class KurohudasApiError(Exception):
-    """Base Kurohudas client error."""
+class LeaApiError(Exception):
+    """Base LEA API error."""
 
 
 @dataclass(slots=True)
 class Station:
-    """Normalized Kurohudas station."""
+    """Normalized LEA station."""
 
     name: str
     network: str
+    company_name: str
     address: str
-    prices: dict[str, float]
-    detail_url: str
-    updated: str | None = None
-    latitude: float | None = None
-    longitude: float | None = None
+    latitude: float
+    longitude: float
+    available_fuels: set[str] = field(default_factory=set)
+    prices: dict[str, float] = field(default_factory=dict)
+    updated: dict[str, str] = field(default_factory=dict)
+    logo_url: str | None = None
 
 
 @dataclass(slots=True)
 class ApiData:
-    """Normalized Kurohudas city result."""
+    """Normalized LEA result."""
 
     stations: list[Station]
     data_date: str | None = None
 
 
-KNOWN_NETWORKS = (
-    "Baltic Petroleum",
-    "Circle K",
-    "Boost Petrol",
-    "Neste",
-    "EMSI",
-    "ORLEN",
-    "Orlen",
-    "Viada",
-    "Jozita",
-    "Stateta",
-    "Skulas",
-    "Saurida",
-    "Alauša",
-    "Alausa",
-    "Regusa",
-    "Lanx",
-)
+FUEL_MAP = {
+    "benzinas_95": "petrol_95",
+    "dyzelinas": "diesel",
+    "snd": "lpg",
+}
 
-_UPDATED_RE = re.compile(
-    r"(Šiandien|Vakar|Užvakar|\d{4}-\d{2}-\d{2})",
-    re.IGNORECASE,
-)
-_DATE_RE = re.compile(r"Kainų data\s*[—-]\s*(\d{4}-\d{2}-\d{2})")
-_COORD_RE = re.compile(
-    r"destination=([-+]?\d+(?:\.\d+)?)%2C([-+]?\d+(?:\.\d+)?)",
-    re.IGNORECASE,
-)
-_PRICE_OR_DASH_RE = re.compile(
-    r"(?<![\d.,])(\d{1,2}[,.]\d{3}|(?<!\S)[-—](?=\s|$))(?![\d.,])"
+NETWORK_PATTERNS = (
+    ("circle k", "Circle K"),
+    ("neste", "Neste"),
+    ("viada", "Viada"),
+    ("emsi", "EMSI"),
+    ("orlen", "ORLEN"),
+    ("baltic petroleum", "Baltic Petroleum"),
+    ("jozita", "Jozita"),
+    ("saurida", "Saurida"),
+    ("stateta", "Stateta"),
+    ("skulas", "Skulas"),
+    ("alauša", "Alauša"),
+    ("alausa", "Alauša"),
+    ("regusa", "Regusa"),
+    ("boost", "Boost Petrol"),
 )
 
 
-class _FuelTableParser(HTMLParser):
-    """Parse classic HTML table layout if Kurohudas uses one."""
-
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self.in_tr = False
-        self.in_cell = False
-        self.current_cells: list[str] = []
-        self.current_cell_parts: list[str] = []
-        self.current_href: str | None = None
-        self.rows: list[tuple[list[str], str | None]] = []
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag == "tr":
-            self.in_tr = True
-            self.current_cells = []
-            self.current_href = None
-        elif self.in_tr and tag in {"td", "th"}:
-            self.in_cell = True
-            self.current_cell_parts = []
-        elif self.in_tr and tag == "a" and self.current_href is None:
-            href = dict(attrs).get("href")
-            if href and "/degalines/" in href:
-                self.current_href = href
-
-    def handle_endtag(self, tag: str) -> None:
-        if self.in_tr and tag in {"td", "th"} and self.in_cell:
-            value = " ".join("".join(self.current_cell_parts).split())
-            self.current_cells.append(value)
-            self.current_cell_parts = []
-            self.in_cell = False
-        elif tag == "tr" and self.in_tr:
-            if self.current_cells:
-                self.rows.append((self.current_cells, self.current_href))
-            self.in_tr = False
-            self.in_cell = False
-
-    def handle_data(self, data: str) -> None:
-        if self.in_tr and self.in_cell:
-            self.current_cell_parts.append(data)
+def _canonical_network(company: str, station_name: str) -> str:
+    text = f"{station_name} {company}".casefold()
+    for pattern, label in NETWORK_PATTERNS:
+        if pattern in text:
+            return label
+    return station_name.strip() or company.strip() or "Degalinė"
 
 
-class _StationStreamParser(HTMLParser):
-    """Parse station links and following prices independent of page layout."""
-
-    def __init__(self) -> None:
-        super().__init__(convert_charrefs=True)
-        self._current_href: str | None = None
-        self._anchor_parts: list[str] = []
-        self._context_parts: list[str] = []
-        self._in_station_anchor = False
-        self.records: list[tuple[str, str, str]] = []
-
-    def _flush(self) -> None:
-        if not self._current_href:
-            return
-        anchor = " ".join(" ".join(self._anchor_parts).split())
-        context = " ".join(" ".join(self._context_parts).split())
-        if anchor:
-            self.records.append((anchor, context, self._current_href))
-        self._current_href = None
-        self._anchor_parts = []
-        self._context_parts = []
-        self._in_station_anchor = False
-
-    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
-        if tag != "a":
-            return
-        href = dict(attrs).get("href")
-        if href and "/degalines/" in href:
-            self._flush()
-            self._current_href = href
-            self._in_station_anchor = True
-
-    def handle_endtag(self, tag: str) -> None:
-        if tag == "a" and self._in_station_anchor:
-            self._in_station_anchor = False
-
-    def handle_data(self, data: str) -> None:
-        if not self._current_href:
-            return
-        text = " ".join(data.split())
-        if not text:
-            return
-        self._context_parts.append(text)
-        if self._in_station_anchor:
-            self._anchor_parts.append(text)
-
-    def close(self) -> None:
-        super().close()
-        self._flush()
-
-
-def _price(value: str) -> float | None:
-    text = value.strip().replace(",", ".")
-    if text in {"", "-", "—"}:
-        return None
-    try:
-        number = float(re.sub(r"[^0-9.]", "", text))
-    except ValueError:
-        return None
-    return number if 0.1 < number < 10 else None
-
-
-def _strip_updated(text: str) -> tuple[str, str | None]:
-    match = _UPDATED_RE.search(text)
-    if not match:
-        return text.strip(), None
-    clean = (text[: match.start()] + " " + text[match.end():]).strip(" ,")
-    return " ".join(clean.split()), match.group(1)
-
-
-def _network_and_address(text: str) -> tuple[str, str]:
-    clean = text.strip()
-    for network in sorted(KNOWN_NETWORKS, key=len, reverse=True):
-        if clean.casefold().startswith(network.casefold()):
-            address = clean[len(network):].strip(" ,-")
-            canonical = "ORLEN" if network.casefold() == "orlen" else network
-            return canonical, address
-
-    first, _, rest = clean.partition(" ")
-    return first or "Degalinė", rest.strip()
-
-
-def _station_from_values(
-    station_text: str,
-    updated: str | None,
-    href: str,
-    values: list[str],
-) -> Station | None:
-    if len(values) < 4:
-        return None
-
-    network, address = _network_and_address(station_text)
-    prices: dict[str, float] = {}
-    mapped = {
-        "diesel": _price(values[0]),
-        "petrol_95": _price(values[1]),
-        "petrol_98": _price(values[2]),
-        "lpg": _price(values[3]),
-    }
-    for fuel, value in mapped.items():
-        if value is not None:
-            prices[fuel] = value
-
-    if not prices:
-        return None
-
-    return Station(
-        name=station_text,
-        network=network,
-        address=address,
-        prices=prices,
-        detail_url=urljoin(KUROHUDAS_BASE_URL, href),
-        updated=updated,
-    )
-
-
-def parse_city_page(html: str) -> ApiData:
-    """Parse Kurohudas city prices using table and layout-independent fallbacks."""
-    data_date_match = _DATE_RE.search(html)
-    data_date = data_date_match.group(1) if data_date_match else None
-    stations: list[Station] = []
-
-    table_parser = _FuelTableParser()
-    table_parser.feed(html)
-    table_parser.close()
-
-    for cells, href in table_parser.rows:
-        if not href or len(cells) < 5:
-            continue
-        station_text, updated = _strip_updated(cells[0])
-        station = _station_from_values(
-            station_text,
-            updated,
-            href,
-            cells[1:5],
-        )
-        if station is not None:
-            stations.append(station)
-
-    if not stations:
-        stream_parser = _StationStreamParser()
-        stream_parser.feed(html)
-        stream_parser.close()
-
-        for anchor_text, context, href in stream_parser.records:
-            station_text, anchor_updated = _strip_updated(anchor_text)
-            context_updated = _UPDATED_RE.search(context)
-            updated = (
-                anchor_updated
-                or (context_updated.group(1) if context_updated else None)
-            )
-            values = [
-                match.group(1)
-                for match in _PRICE_OR_DASH_RE.finditer(context)
-            ][:4]
-            station = _station_from_values(
-                station_text,
-                updated,
-                href,
-                values,
-            )
-            if station is not None:
-                stations.append(station)
-
-    # De-duplicate in case the page contains the same station link more than once.
-    unique: dict[str, Station] = {}
-    for station in stations:
-        unique[station.detail_url] = station
-    stations = list(unique.values())
-
-    if not stations:
-        raise KurohudasApiError(
-            "Kurohudas puslapyje nerastos degalinių kainos"
-        )
-
-    return ApiData(stations=stations, data_date=data_date)
-
-
-def parse_coordinates(html: str) -> tuple[float, float] | None:
-    """Extract coordinates from Google Maps navigation link."""
-    match = _COORD_RE.search(html)
-    if match:
-        return float(match.group(1)), float(match.group(2))
-
-    for href in re.findall(
-        r'href=["\']([^"\']*google\.com/maps/dir/[^"\']*)',
-        html,
-    ):
-        parsed = urlparse(href.replace("&amp;", "&"))
-        destination = parse_qs(parsed.query).get("destination")
-        if not destination:
-            continue
-        parts = unquote(destination[0]).split(",", 1)
-        if len(parts) != 2:
-            continue
-        try:
-            return float(parts[0]), float(parts[1])
-        except ValueError:
-            continue
-    return None
-
-
-class KurohudasApi:
-    """Async Kurohudas web client."""
+class LeaFuelApi:
+    """Client for the public LEA fuel-price frontend API."""
 
     def __init__(self, session: ClientSession) -> None:
         self._session = session
+        self._api_base: str | None = None
+        self._token: str | None = None
         self._headers = {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/153.0 Safari/537.36"
-            ),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "lt-LT,lt;q=0.9,en;q=0.7",
-            "Cache-Control": "no-cache",
+            "User-Agent": "HomeAssistant TuščiasBakas integration",
+            "Accept": "application/json,text/html;q=0.9,*/*;q=0.8",
         }
 
     async def _get_text(self, url: str) -> str:
@@ -339,25 +91,166 @@ class KurohudasApi:
                 timeout=30,
             ) as response:
                 if response.status != 200:
-                    raise KurohudasApiError(f"HTTP {response.status}: {url}")
-                text = await response.text()
-                if len(text) < 500:
-                    raise KurohudasApiError(
-                        f"Kurohudas grąžino per trumpą puslapį ({len(text)} B)"
-                    )
-                return text
+                    raise LeaApiError(f"HTTP {response.status}: {url}")
+                return await response.text()
         except (ClientError, TimeoutError) as err:
-            raise KurohudasApiError(str(err)) from err
+            raise LeaApiError(str(err)) from err
 
-    async def async_get_stations(self, city: str) -> ApiData:
-        url = f"{KUROHUDAS_BASE_URL}/miestas/{quote(city.strip(), safe='')}"
-        return parse_city_page(await self._get_text(url))
+    async def _discover_api_config(self) -> None:
+        """Read the API base and public read token from LEA's frontend bundle."""
+        html = await self._get_text(LEA_SITE_URL)
 
-    async def async_get_coordinates(
-        self,
-        detail_url: str,
-    ) -> tuple[float, float] | None:
-        return parse_coordinates(await self._get_text(detail_url))
+        script_urls = [
+            urljoin(LEA_SITE_URL, src)
+            for src in re.findall(
+                r'<script[^>]+src=["\']([^"\']+)["\']',
+                html,
+                re.IGNORECASE,
+            )
+        ]
+
+        app_bundle_url: str | None = None
+        for script_url in script_urls:
+            if "xlsx" in script_url or "cloudflare" in script_url:
+                continue
+            try:
+                javascript = await self._get_text(script_url)
+            except LeaApiError:
+                continue
+            match = re.search(
+                r'["\'](?:\./)?(FuelPriceSiteApp-[A-Za-z0-9_-]+\.js)["\']',
+                javascript,
+            )
+            if match:
+                app_bundle_url = urljoin(script_url, match.group(1))
+                break
+
+        if not app_bundle_url:
+            raise LeaApiError("LEA puslapyje nerastas FuelPriceSiteApp failas")
+
+        app_js = await self._get_text(app_bundle_url)
+        config = re.search(
+            r'apiBase:"([^"]+)",token:"([^"]+)"',
+            app_js,
+        )
+        if not config:
+            raise LeaApiError("LEA puslapyje nerasta viešo API konfigūracija")
+
+        self._api_base = config.group(1).rstrip("/")
+        self._token = config.group(2)
+
+    async def _request_latest(self, retry_auth: bool = True) -> dict:
+        if not self._api_base or not self._token:
+            await self._discover_api_config()
+
+        assert self._api_base is not None
+        assert self._token is not None
+
+        url = f"{self._api_base}/read/prices/latest"
+        headers = {
+            **self._headers,
+            "Authorization": f"Bearer {self._token}",
+        }
+
+        try:
+            async with self._session.get(
+                url,
+                headers=headers,
+                timeout=30,
+            ) as response:
+                if response.status == 401 and retry_auth:
+                    self._api_base = None
+                    self._token = None
+                    await self._discover_api_config()
+                    return await self._request_latest(retry_auth=False)
+                if response.status != 200:
+                    raise LeaApiError(f"LEA API HTTP {response.status}")
+                return await response.json(content_type=None)
+        except (ClientError, TimeoutError, ValueError) as err:
+            raise LeaApiError(str(err)) from err
+
+    async def async_get_stations(self) -> ApiData:
+        payload = await self._request_latest()
+        rows = payload.get("data", [])
+        if not isinstance(rows, list):
+            raise LeaApiError("LEA API grąžino netikėtą duomenų formatą")
+
+        grouped: dict[str, Station] = {}
+        latest_date: str | None = None
+
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+
+            try:
+                latitude = float(row.get("latitude"))
+                longitude = float(row.get("longitude"))
+            except (TypeError, ValueError):
+                continue
+
+            company = str(row.get("company_name") or "").strip()
+            station_name = str(row.get("gas_station_name") or "").strip()
+            address = str(row.get("address") or "").strip()
+            network = _canonical_network(company, station_name)
+
+            key = "|".join(
+                (
+                    company.casefold(),
+                    station_name.casefold(),
+                    address.casefold(),
+                    f"{latitude:.6f}",
+                    f"{longitude:.6f}",
+                )
+            )
+            station = grouped.get(key)
+            if station is None:
+                station = Station(
+                    name=station_name or network,
+                    network=network,
+                    company_name=company,
+                    address=address,
+                    latitude=latitude,
+                    longitude=longitude,
+                    logo_url=row.get("logo_url") or None,
+                )
+                grouped[key] = station
+            elif not station.logo_url and row.get("logo_url"):
+                station.logo_url = str(row["logo_url"])
+
+            for raw_fuel in row.get("fuel_types") or []:
+                mapped = FUEL_MAP.get(str(raw_fuel))
+                if mapped:
+                    station.available_fuels.add(mapped)
+
+            raw_fuel = str(row.get("fuel_type") or "")
+            fuel = FUEL_MAP.get(raw_fuel)
+            if not fuel:
+                continue
+            station.available_fuels.add(fuel)
+
+            submitted_at = str(row.get("submitted_at") or "")
+            if submitted_at:
+                station.updated[fuel] = submitted_at
+                date = submitted_at[:10]
+                if date and (latest_date is None or date > latest_date):
+                    latest_date = date
+
+            raw_price = row.get("price")
+            if raw_price is None:
+                continue
+            try:
+                price = float(str(raw_price).replace(",", "."))
+            except ValueError:
+                continue
+            if 0 < price < 10:
+                station.prices[fuel] = price
+
+        if not grouped:
+            raise LeaApiError("LEA API negrąžino degalinių")
+
+        last_updated = str(payload.get("last_updated") or "")
+        data_date = last_updated[:10] if last_updated else latest_date
+        return ApiData(stations=list(grouped.values()), data_date=data_date)
 
 
 def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -369,5 +262,8 @@ def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     p2 = math.radians(lat2)
     dp = math.radians(lat2 - lat1)
     dl = math.radians(lon2 - lon1)
-    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    a = (
+        math.sin(dp / 2) ** 2
+        + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    )
     return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
