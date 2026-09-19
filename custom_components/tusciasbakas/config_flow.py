@@ -32,6 +32,7 @@ from .const import (
     DEFAULT_FUEL_TYPE,
     DEFAULT_RADIUS_KM,
     DEFAULT_UPDATE_MINUTES,
+    DEFAULT_VISIBLE_NETWORK_PATTERNS,
     DOMAIN,
     FUEL_TYPES,
 )
@@ -197,7 +198,19 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
             return self._save({CONF_EXCLUDED_NETWORKS: excluded})
 
         networks = await _async_network_names(self.hass)
-        selected = list(current.get(CONF_EXCLUDED_NETWORKS, []))
+
+        if CONF_EXCLUDED_NETWORKS in current:
+            selected = list(current.get(CONF_EXCLUDED_NETWORKS, []))
+        else:
+            selected = [
+                network
+                for network in networks
+                if not any(
+                    pattern in network.casefold()
+                    for pattern in DEFAULT_VISIBLE_NETWORK_PATTERNS
+                )
+            ]
+
         all_options = sorted(
             set(networks) | set(selected),
             key=str.casefold,
