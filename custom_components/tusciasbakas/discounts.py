@@ -1,9 +1,10 @@
-"""Discount rule parser for Tuščias bakas."""
+"""Discount handling for Tuščias bakas."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Any
 
 
 DAY_ALIASES = {
@@ -16,6 +17,8 @@ DAY_ALIASES = {
     "sun": 6, "sunday": 6, "sek": 6, "sekmadienis": 6,
 }
 
+DAY_SHORT = ["Pir", "Ant", "Tre", "Ket", "Pen", "Šeš", "Sek"]
+
 
 @dataclass(slots=True, frozen=True)
 class DiscountRule:
@@ -25,11 +28,14 @@ class DiscountRule:
     source: str
 
     def active(self, station_text: str, today: date) -> bool:
-        return self.pattern.casefold() in station_text.casefold() and today.weekday() in self.weekdays
+        return (
+            self.pattern.casefold() in station_text.casefold()
+            and today.weekday() in self.weekdays
+        )
 
 
 def parse_discount_rules(text: str) -> tuple[list[DiscountRule], list[str]]:
-    """Parse station;days;discount lines."""
+    """Parse legacy station;days;discount lines."""
     rules: list[DiscountRule] = []
     errors: list[str] = []
 
@@ -54,7 +60,9 @@ def parse_discount_rules(text: str) -> tuple[list[DiscountRule], list[str]]:
             for day in days_raw.split(","):
                 key = day.strip().casefold()
                 if key not in DAY_ALIASES:
-                    errors.append(f"{lineno} eilutė: neatpažinta diena '{day.strip()}'")
+                    errors.append(
+                        f"{lineno} eilutė: neatpažinta diena '{day.strip()}'"
+                    )
                     day_values.clear()
                     break
                 day_values.add(DAY_ALIASES[key])
@@ -74,3 +82,53 @@ def parse_discount_rules(text: str) -> tuple[list[DiscountRule], list[str]]:
         rules.append(DiscountRule(pattern, weekdays, amount, line))
 
     return rules, errors
+
+
+def rules_from_structured(items: list[dict[str, Any]] | None) -> list[DiscountRule]:
+    """Convert UI-friendly structured discounts to runtime rules."""
+    result: list[DiscountRule] = []
+    for item in items or []:
+        try:
+            network = str(item["network"]).strip()
+            weekdays = frozenset(int(day) for day in item.get("weekdays", []))
+            amount = float(item["amount"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if not network or not weekdays or not 0 <= amount <= 1:
+            continue
+
+        days = ", ".join(DAY_SHORT[d] for d in sorted(weekdays) if 0 <= d <= 6)
+        result.append(
+            DiscountRule(
+                pattern=network,
+                weekdays=weekdays,
+                amount_eur_l=amount,
+                source=f"{network}: {days} −{amount:.2f} €/l",
+            )
+        )
+    return result
+
+
+def structured_from_legacy(text: str) -> list[dict[str, Any]]:
+    """Convert old free-text rules so upgrades keep existing discounts."""
+    rules, _ = parse_discount_rules(text)
+    return [
+        {
+            "network": rule.pattern,
+            "weekdays": sorted(rule.weekdays),
+            "amount": rule.amount_eur_l,
+        }
+        for rule in rules
+    ]
+
+
+def structured_rule_label(item: dict[str, Any]) -> str:
+    """Human readable label for the options flow."""
+    network = str(item.get("network", "Degalinė"))
+    weekdays = [
+        DAY_SHORT[int(day)]
+        for day in item.get("weekdays", [])
+        if str(day).isdigit() and 0 <= int(day) <= 6
+    ]
+    amount = float(item.get("amount", 0) or 0)
+    return f"{network} · {', '.join(weekdays)} · −{amount:.2f} €/l"
