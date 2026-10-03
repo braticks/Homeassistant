@@ -264,7 +264,7 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
                 {
                     "network": str(user_input["network"]),
                     "weekdays": [int(day) for day in user_input["weekdays"]],
-                    "amount": float(user_input["amount"]),
+                    "amount": round(float(user_input["amount"]), 3),
                 }
             )
             return await self.async_step_discounts()
@@ -288,11 +288,11 @@ class TusciasBakasOptionsFlow(OptionsFlowWithReload):
                             mode=SelectSelectorMode.DROPDOWN,
                         )
                     ),
-                    vol.Required("amount", default=0.05): NumberSelector(
+                    vol.Required("amount", default=0.050): NumberSelector(
                         NumberSelectorConfig(
-                            min=0.01,
-                            max=1.00,
-                            step=0.01,
+                            min=0.001,
+                            max=1.000,
+                            step=0.001,
                             unit_of_measurement="€/l",
                             mode=NumberSelectorMode.BOX,
                         )
