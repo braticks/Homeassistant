@@ -71,7 +71,7 @@ def parse_discount_rules(text: str) -> tuple[list[DiscountRule], list[str]]:
             weekdays = frozenset(day_values)
 
         try:
-            amount = float(amount_raw.replace(",", "."))
+            amount = round(float(amount_raw.replace(",", ".")), 3)
         except ValueError:
             errors.append(f"{lineno} eilutė: neteisinga nuolaida '{amount_raw}'")
             continue
@@ -91,7 +91,7 @@ def rules_from_structured(items: list[dict[str, Any]] | None) -> list[DiscountRu
         try:
             network = str(item["network"]).strip()
             weekdays = frozenset(int(day) for day in item.get("weekdays", []))
-            amount = float(item["amount"])
+            amount = round(float(item["amount"]), 3)
         except (KeyError, TypeError, ValueError):
             continue
         if not network or not weekdays or not 0 <= amount <= 1:
@@ -103,7 +103,7 @@ def rules_from_structured(items: list[dict[str, Any]] | None) -> list[DiscountRu
                 pattern=network,
                 weekdays=weekdays,
                 amount_eur_l=amount,
-                source=f"{network}: {days} −{amount:.2f} €/l",
+                source=f"{network}: {days} −{amount:.3f} €/l",
             )
         )
     return result
@@ -130,5 +130,5 @@ def structured_rule_label(item: dict[str, Any]) -> str:
         for day in item.get("weekdays", [])
         if str(day).isdigit() and 0 <= int(day) <= 6
     ]
-    amount = float(item.get("amount", 0) or 0)
-    return f"{network} · {', '.join(weekdays)} · −{amount:.2f} €/l"
+    amount = round(float(item.get("amount", 0) or 0), 3)
+    return f"{network} · {', '.join(weekdays)} · −{amount:.3f} €/l"
